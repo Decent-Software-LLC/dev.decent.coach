@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0d100e">
+    <title>Basketball Drills</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d100e;
+        --panel: #141815;
+        --panel-2: #1a1f1b;
+        --ink: #f6f3ea;
+        --muted: #9ba19c;
+        --line: rgba(255, 255, 255, 0.11);
+        --lime: #c8ff4d;
+        --red: #e35f36;
+        --court: #8a4f2b;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        min-width: 320px;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      button, input { font: inherit; }
+      button { color: inherit; }
+
+      .app { display: grid; grid-template-rows: 72px minmax(0, 1fr); height: 100%; }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 0 24px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(13, 16, 14, 0.94);
+        backdrop-filter: blur(18px);
+      }
+      .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+      .brand-mark {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        place-items: center;
+        border-radius: 12px;
+        background: var(--lime);
+        color: #11150f;
+        font-weight: 950;
+        letter-spacing: -0.08em;
+      }
+      .brand h1 { margin: 0; font-size: 16px; letter-spacing: -0.02em; }
+      .brand p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(260px, 310px) minmax(0, 1fr);
+        min-height: 0;
+        transition: grid-template-columns 200ms ease;
+      }
+      .workspace.library-collapsed { grid-template-columns: 76px minmax(0, 1fr); }
+      .library {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-height: 0;
+        border-right: 1px solid var(--line);
+        background: #111512;
+      }
+      .library-heading { position: relative; padding: 24px 54px 14px 20px; }
+      .library-toggle {
+        position: absolute;
+        top: 22px;
+        right: 14px;
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #191e1a;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .library-toggle:hover { border-color: rgba(200,255,77,.45); color: var(--lime); }
+      .library-toggle:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+      .library-toggle svg { transition: transform 200ms ease; }
+      .library-collapsed .library-toggle svg { transform: rotate(180deg); }
+      .library-collapsed .library-heading { min-height: 74px; padding: 0; }
+      .library-collapsed .library-toggle { top: 20px; right: 20px; }
+      .library-collapsed .library-heading > :not(.library-toggle),
+      .library-collapsed #drill-library-content { display: none; }
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--lime);
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: .13em;
+        text-transform: uppercase;
+      }
+      .library h2 { margin: 0; font-size: 23px; letter-spacing: -.04em; }
+      .library-heading p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+      #drill-library-content { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+      .search-wrap { position: relative; margin: 0 16px 14px; }
+      .search-wrap svg { position: absolute; top: 50%; left: 14px; color: #747b75; transform: translateY(-50%); }
+      .search {
+        width: 100%;
+        height: 42px;
+        padding: 0 40px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        outline: none;
+        background: #191e1a;
+        color: var(--ink);
+      }
+      .search::placeholder { color: #727972; }
+      .search:focus { border-color: rgba(200,255,77,.7); box-shadow: 0 0 0 3px rgba(200,255,77,.12); }
+      .search-count { position: absolute; top: 50%; right: 12px; color: #747b75; font-size: 10px; transform: translateY(-50%); }
+      .drill-list { overflow-y: auto; padding: 0 12px 20px; scrollbar-color: #3b423c transparent; }
+      .source-label {
+        margin: 15px 8px 7px;
+        color: #727972;
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+      .drill-item {
+        display: grid;
+        width: 100%;
+        grid-template-columns: 32px minmax(0,1fr) auto;
+        align-items: center;
+        gap: 10px;
+        min-height: 54px;
+        padding: 8px 10px;
+        border: 1px solid transparent;
+        border-radius: 13px;
+        background: transparent;
+        text-align: left;
+      }
+      .drill-item + .drill-item { margin-top: 3px; }
+      .drill-item:not(:disabled) { cursor: pointer; }
+      .drill-item:not(:disabled):hover { background: rgba(255,255,255,.04); }
+      .drill-item.active { border-color: rgba(200,255,77,.43); background: rgba(200,255,77,.09); }
+      .drill-number {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        place-items: center;
+        border-radius: 9px;
+        background: #222824;
+        color: #aeb4ae;
+        font-size: 10px;
+        font-weight: 800;
+      }
+      .active .drill-number { background: var(--lime); color: #10140f; }
+      .drill-title { overflow: hidden; color: #d9dcd8; font-size: 12px; font-weight: 730; line-height: 1.25; text-overflow: ellipsis; }
+      .drill-item:disabled { opacity: .42; }
+      .status-pill {
+        padding: 4px 6px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.06);
+        color: #989e99;
+        font-size: 8px;
+        font-weight: 850;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+      }
+      .active .status-pill { background: rgba(200,255,77,.13); color: var(--lime); }
+      .empty { display: none; padding: 28px 18px; color: var(--muted); font-size: 13px; text-align: center; }
+
+      main {
+        min-width: 0;
+        min-height: 0;
+        overflow-y: auto;
+        background: radial-gradient(circle at 72% 4%, rgba(200,255,77,.06), transparent 29%), var(--bg);
+      }
+      .lesson { display: grid; grid-template-columns: minmax(290px, 390px) minmax(420px, 1fr); gap: 24px; min-height: 100%; padding: 24px; }
+      .lesson[data-layout="list"] { grid-template-columns: minmax(420px, 680px); justify-content: center; }
+      .lesson[data-layout="court"] { grid-template-columns: minmax(560px, 920px); justify-content: center; }
+      .lesson[data-layout="list"] .court-panel,
+      .lesson[data-layout="court"] .lesson-copy { display: none; }
+      .lesson-copy, .court-panel {
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: rgba(23,27,24,.92);
+        box-shadow: 0 24px 70px rgba(0,0,0,.24);
+      }
+      .lesson-copy { display: flex; flex-direction: column; padding: 26px; }
+      .lesson-copy h2 { margin: 0; font-size: clamp(28px, 3vw, 42px); line-height: .98; letter-spacing: -.055em; }
+      .summary { margin: 14px 0 18px; color: #aeb3ae; font-size: 13px; line-height: 1.6; }
+      .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+      .meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #c8ccc8;
+        font-size: 10px;
+        font-weight: 750;
+      }
+      .meta-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
+      .step-label { margin: 0 0 10px; color: #7f867f; font-size: 10px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+      .steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+      .step-button {
+        display: grid;
+        width: 100%;
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 11px;
+        align-items: start;
+        padding: 11px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: #191e1a;
+        text-align: left;
+        cursor: pointer;
+      }
+      .step-button:hover { border-color: rgba(255,255,255,.22); }
+      .step-button[aria-current="step"] { border-color: rgba(200,255,77,.55); background: rgba(200,255,77,.07); }
+      .step-number {
+        display: grid;
+        width: 32px;
+        height: 32px;
+        place-items: center;
+        border-radius: 10px;
+        background: #282e29;
+        color: #cbd0cb;
+        font-size: 11px;
+        font-weight: 850;
+      }
+      [aria-current="step"] .step-number { background: var(--lime); color: #11150f; }
+      .step-copy strong { display: block; margin: 1px 0 3px; font-size: 12px; }
+      .step-copy span { display: block; color: #939a94; font-size: 11px; line-height: 1.45; }
+      .next-phase {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: auto;
+        padding-top: 22px;
+        color: #7c837d;
+        font-size: 10px;
+      }
+      .next-phase svg { color: var(--lime); }
+
+      .court-panel { display: grid; grid-template-rows: auto minmax(0,1fr) auto; min-height: 560px; overflow: hidden; }
+      .court-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 19px; border-bottom: 1px solid var(--line); }
+      .court-header strong { display: block; font-size: 12px; }
+      .court-header span { color: var(--muted); font-size: 10px; }
+      .view-switch {
+        display: inline-flex;
+        padding: 3px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(255,255,255,.035);
+      }
+      .view-option {
+        min-height: 28px;
+        padding: 0 10px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .view-option[aria-pressed="true"] { background: var(--lime); color: #11150f; }
+      .lesson-copy > .view-switch { display: none; }
+      .lesson[data-layout="list"] .lesson-copy > .view-switch { display: inline-flex; align-self: flex-end; margin-bottom: 12px; }
+      .mobile-view-toggle { display: none; }
+      .lesson-copy > .mobile-view-toggle { align-self: flex-end; margin-bottom: 12px; }
+      .court-wrap { position: relative; min-height: 0; padding: 24px; background: #121613; }
+      .court-stage {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: 410px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,.17);
+        border-radius: 16px;
+        background: var(--court);
+        box-shadow: inset 0 0 70px rgba(35,12,3,.22);
+        height: 100%;
+      }
+      .court-stage::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, transparent 1px 38px);
+      }
+      .court-scene {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: auto;
+        height: 100%;
+        aspect-ratio: 5 / 3;
+        transform: translateX(var(--court-track-x, 0px));
+        transition: transform 2s cubic-bezier(.22,.75,.2,1);
+      }
+      .court-scene.no-transition,
+      .court-scene.no-transition .player,
+      .court-scene.no-transition .court-ball { transition: none; }
+      .court-image { width: 100%; height: 100%; display: block; object-fit: contain; padding: 3%; opacity: .94; user-select: none; pointer-events: none; }
+      .player {
+        position: absolute;
+        z-index: 3;
+        display: grid;
+        width: clamp(30px, 3.6vw, 41px);
+        aspect-ratio: 1;
+        place-items: center;
+        border: 3px solid white;
+        border-radius: 50%;
+        background: var(--red);
+        color: white;
+        box-shadow: 0 8px 20px rgba(33,9,2,.38), 0 0 0 4px rgba(227,95,54,.18);
+        font-size: clamp(13px, 1.5vw, 17px);
+        font-weight: 900;
+        transform: translate(-50%, -50%);
+        transition: left 2s cubic-bezier(.22,.75,.2,1), top 2s cubic-bezier(.22,.75,.2,1);
+      }
+      .court-ball {
+        position: absolute;
+        z-index: 4;
+        display: grid;
+        width: 24px;
+        height: 24px;
+        place-items: center;
+        border-radius: 50%;
+        background: #111512;
+        font-size: 14px;
+        box-shadow: 0 3px 9px rgba(0,0,0,.45);
+        transform: translate(45%, 45%);
+        transition: left 2s cubic-bezier(.22,.75,.2,1), top 2s cubic-bezier(.22,.75,.2,1);
+      }
+      .player-1 { left: 5%; top: 50%; }
+      .player-2 { left: 5%; top: 29%; }
+      .player-3 { left: 5%; top: 71%; }
+      .start-label { position: absolute; z-index: 2; left: 1.2%; top: 50%; color: rgba(255,255,255,.72); font-size: 9px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); }
+      .court-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 19px; border-top: 1px solid var(--line); }
+      .step-status strong { display: block; font-size: 11px; }
+      .step-status span { color: var(--muted); font-size: 10px; }
+      .next-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 38px;
+        padding: 0 13px;
+        border: 1px solid rgba(200,255,77,.5);
+        border-radius: 999px;
+        background: rgba(200,255,77,.1);
+        color: var(--lime);
+        font-size: 10px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .next-button:hover { background: rgba(200,255,77,.18); }
+
+      @media (max-width: 980px) {
+        .app { height: auto; min-height: 100%; }
+        .workspace { grid-template-columns: 250px minmax(0,1fr); }
+        .lesson { grid-template-columns: 1fr; }
+        .lesson[data-layout="list"], .lesson[data-layout="court"] { grid-template-columns: 1fr; justify-content: stretch; }
+        .library { max-height: calc(100vh - 72px); position: sticky; top: 0; }
+      }
+      @media (max-width: 720px) {
+        .topbar { padding: 0 16px; }
+        .brand p, .back-link span { display: none; }
+        .workspace { display: block; }
+        .workspace.library-collapsed { display: block; }
+        .library { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+        .library-collapsed .library { min-height: 58px; }
+        .library-collapsed .library-heading { min-height: 58px; }
+        .library-collapsed .library-toggle { top: 12px; right: 16px; }
+        .drill-list { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 16px; }
+        .source-label { display: none; }
+        .drill-item { min-width: 210px; margin: 0 !important; }
+        .lesson { padding: 14px; gap: 14px; }
+        .lesson[data-mobile-view="list"] .court-panel { display: none; }
+        .lesson[data-mobile-view="court"] .lesson-copy { display: none; }
+        .lesson[data-mobile-view="list"] .lesson-copy,
+        .lesson[data-mobile-view="court"] .court-panel { display: flex; }
+        .lesson[data-mobile-view="court"] .court-panel { display: grid; }
+        .lesson-copy { padding: 21px; }
+        .court-panel { min-height: 510px; }
+        .court-wrap { padding: 14px; }
+        .court-stage { min-height: 360px; }
+        .view-switch,
+        .lesson[data-layout="list"] .lesson-copy > .view-switch { display: none; }
+        .mobile-view-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 32px;
+          padding: 0 10px;
+          border: 1px solid rgba(200,255,77,.4);
+          border-radius: 9px;
+          background: rgba(200,255,77,.09);
+          color: var(--lime);
+          font-size: 9px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">B</div>
+          <div>
+            <h1>Basketball Drills</h1>
+            <p>Learn it. Teach it. Run it.</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="workspace" id="workspace">
+        <aside class="library" aria-label="Drill library">
+          <div class="library-heading">
+            <button class="library-toggle" id="library-toggle" type="button" aria-expanded="true" aria-controls="drill-library-content" aria-label="Collapse drill library" title="Collapse drill library">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <p class="eyebrow">Drill library</p>
+            <h2>Choose a drill</h2>
+            <p>One lesson is ready. More guided drills are coming next.</p>
+          </div>
+          <div id="drill-library-content">
+            <label class="search-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span class="sr-only" hidden>Search drills</span>
+              <input class="search" id="drill-search" type="search" placeholder="Search drills" aria-label="Search drills" autocomplete="off">
+              <span class="search-count" id="search-count">136</span>
+            </label>
+            <div class="drill-list" id="drill-list">
+              <p class="empty" id="empty-state">No drills match that search.</p>
+            </div>
+          </div>
+        </aside>
+
+        <main>
+          <section class="lesson" id="lesson" data-layout="both" data-mobile-view="list" aria-labelledby="lesson-title">
+            <article class="lesson-copy">
+              <div class="view-switch" aria-label="Lesson layout">
+                <button class="view-option" type="button" data-layout="list" aria-pressed="false">List</button>
+                <button class="view-option" type="button" data-layout="court" aria-pressed="false">Court</button>
+                <button class="view-option" type="button" data-layout="both" aria-pressed="true">Both</button>
+              </div>
+              <button class="mobile-view-toggle" type="button" aria-label="Show court view">Court view</button>
+              <p class="eyebrow">Passing · Transition</p>
+              <h2 id="lesson-title">Three-Man<br>Weave</h2>
+              <p class="summary">Three players pass in a weave pattern up the court, following each pass with a hard cut behind the receiver.</p>
+              <div class="meta" aria-label="Drill details">
+                <span class="meta-chip"><span class="meta-dot"></span>3 players</span>
+                <span class="meta-chip">1 basketball</span>
+                <span class="meta-chip">Full court</span>
+              </div>
+
+              <p class="step-label">How to run it</p>
+              <ol class="steps">
+                <li><button class="step-button" type="button" aria-current="step" data-step="1"><span class="step-number">01</span><span class="step-copy"><strong>Start in three lanes</strong><span>Form three lines on the baseline. Player 1 begins in the middle with the ball.</span></span></button></li>
+                <li><button class="step-button" type="button" data-step="2"><span class="step-number">02</span><span class="step-copy"><strong>Pass and cut behind</strong><span>Pass to an outside lane, then sprint behind the player who received the pass.</span></span></button></li>
+                <li><button class="step-button" type="button" data-step="3"><span class="step-number">03</span><span class="step-copy"><strong>Keep the weave moving</strong><span>Repeat the pass-and-cut pattern, leading every runner into open space.</span></span></button></li>
+                <li><button class="step-button" type="button" data-step="4"><span class="step-number">04</span><span class="step-copy"><strong>Finish at the rim</strong><span>The receiver nearest the basket attacks. The other two form a rebounding triangle.</span></span></button></li>
+              </ol>
+            </article>
+
+            <section class="court-panel" aria-label="Three-Man Weave court setup">
+              <div class="court-header">
+                <div><strong>Starting positions</strong><span id="court-step-count">1 of 4 · Aerial court view</span></div>
+                <div class="view-switch" aria-label="Lesson layout">
+                  <button class="view-option" type="button" data-layout="list" aria-pressed="false">List</button>
+                  <button class="view-option" type="button" data-layout="court" aria-pressed="false">Court</button>
+                  <button class="view-option" type="button" data-layout="both" aria-pressed="true">Both</button>
+                </div>
+                <button class="mobile-view-toggle" type="button" aria-label="Show list view">List view</button>
+              </div>
+              <div class="court-wrap">
+                <div class="court-stage" id="court-stage">
+                  <div class="court-scene" id="court-scene">
+                    <img class="court-image" src="assets/basketball-fullcourt.svg" alt="Aerial full basketball court diagram">
+                    <div class="player player-1" aria-label="Player 1">1</div>
+                    <div class="player player-2" aria-label="Player 2">2</div>
+                    <div class="player player-3" aria-label="Player 3">3</div>
+                    <div class="court-ball" id="court-ball" aria-label="Basketball">🏀</div>
+                    <span class="start-label">Baseline start</span>
+                  </div>
+                </div>
+              </div>
+              <div class="court-footer">
+                <div class="step-status" aria-live="polite"><strong id="step-status-title">Step 1 of 4</strong><span id="step-status-copy">Start in three lanes</span></div>
+                <button class="next-button" id="next-step" type="button" aria-label="Go to next step">
+                  <span id="next-step-label">Next</span>
+                </button>
+              </div>
+            </section>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      const sources = [
+        { label: "Basketball Drills", drills: [
+          "Bull In The Ring", "Bump The Cutter", "Chill Drill", "Close Out Drill", "Defensive Shuffle And Pass", "Fifty Passes", "Five Corner Passing", "Five On Four Plus One", "Four On Four Recover", "Full Court Four Line Passing", "Full Court Lay-ups With Chaser", "Full Court Lay-ups", "Horseshoe Shooting", "Knockout", "Lay-up And Rebounding Lines", "Line Dribbling Drills", "Line Running Drills", "Mass Defensive Drill", "Mirror Drills", "Motion Offense - Ball Reversal, Receivers", "Motion Offense - Cutting To Get Open", "Motion Offense - Dribble Entries", "Motion Offense - Give And Go", "Motion Offense - Perimeter To Post", "Motion Offense - Post Players", "Motion Offense - Screen And Roll", "Motion Offense - Screen Away", "Mushball", "One On One", "Pass, Shoot And Rebound", "Pass, Shoot, Box Out", "Penetrate And Dish", "Pepper Drill", "Pig In The Middle", "Pivot Away, Two On One", "Post Moves", "Power Post Pickups", "Pride Drill", "Shell Drill", "Slide Run Slide", "Star Drill", "Ten Fingers", "Terminator", "Three On Two, Two On One", "Three-Man Weave", "Turning And Channeling The Dribbler", "Two Teams Sliding", "Cincinatti", "Create A Lead", "Dribble, Cut, Pass & Drive", "Half Court, Two Pass Drill", "Triangle Passing", "Triangle Shooting"
+        ]},
+        { label: "90-Minute Practice Plan", drills: [
+          "Partner Shooting", "Chase Down Layups", "2-on-2 Box Out", "No Hands Defense", "Tip Transition"
+        ]},
+        { label: "Practice Transition Drills", drills: [
+          "Detroit", "Three on Three on Three", "Catch Up", "Three-on-Two, Two-on-One Continuous Conversion Drill", "Four-on-Two-on-Two", "Eagle Break Drill", "Flagler", "Niagara"
+        ]},
+        { label: "Breakthrough Basketball 72 Drills", drills: [
+          "2v1 Shooting", "Creighton Rebounding", "Around The Cones Transition", "Butler Advantage Drill", "4 Corners Passing", "Marquette 3v3 Full Court", "Charge To Scramble", "Disadvantage Drill", "2v2 Zoom", "3v3 1 Side Of The Court", "Full Court 1v1 With Closeout", "Navy Transition", "2 Minute Closeouts", "Full Court 1v1 With Turns", "Ball Screen Defense Drill", "Offensive Cutthroat", "1v2 Zone Press Drill",
+          "Monkey In The Middle", "Bull In The Ring", "5v3 + 2 Fast Break", "5v0 Pass & Cut", "5v0 Pass & Pick Away",
+          "Figure 8 Shooting", "Chair Pivots", "Ball Screen Reads", "Chair 1v1", "Partner Shooting", "20 Shooting", "14 in :90", "Big Shot", "Nuggets Drill", "Arc Finishing", "1v1 Cone Touch", "Euro Step Drill", "Baseline Drive Team Shooting", "Drag Screen Team Shooting", "Pistol Action Team Shooting", "Post Entry Team Shooting", "DHO Reject Team Shooting",
+          "1 on 1 Closeout", "Man In The Hole", "1v1 To 3v3 Full Court", "4v4 Shell", "4 on 3 Overload", "No Paint Drill", "5v4 Whistle Change", "4v4 With Baseline Drivers", "5v2 Weak Side Help", "Complete Man To Man Drill", "2 on 2 Ball Screens", "B.U. Closeouts", "2v2 Shell", "Deflection Drill", "Get Back Drill", "1v2 Trapping", "3v2 Sideline Trap", "2v1 Tip From Behind", "Trap To A Tip", "Tip From Behind", "Split & Tip", "4v4 Box Middle", "4v4 Box Sideline", "Guard Overload", "Rebound By Numbers",
+          "Curl Cut Drill", "Flare Cut Drill", "Kick Up Drill", "Kick Back Drill", "2 Man Hammer Pass", "Handoff & Help Drill", "Zoom Reads Drill", "Press Breaker Drill"
+        ]}
+      ];
+
+      const list = document.querySelector("#drill-list");
+      const search = document.querySelector("#drill-search");
+      const count = document.querySelector("#search-count");
+      const empty = document.querySelector("#empty-state");
+      const readyDrill = "Three-Man Weave";
+      const workspace = document.querySelector("#workspace");
+      const libraryToggle = document.querySelector("#library-toggle");
+
+      libraryToggle.addEventListener("click", () => {
+        const collapsed = workspace.classList.toggle("library-collapsed");
+        libraryToggle.setAttribute("aria-expanded", String(!collapsed));
+        libraryToggle.setAttribute("aria-label", collapsed ? "Expand drill library" : "Collapse drill library");
+        libraryToggle.title = collapsed ? "Expand drill library" : "Collapse drill library";
+      });
+
+      function renderDrills(query = "") {
+        list.querySelectorAll(":scope > :not(#empty-state)").forEach((node) => node.remove());
+        const needle = query.trim().toLowerCase();
+        let visibleCount = 0;
+        let catalogIndex = 0;
+        const seen = new Set();
+
+        sources.forEach((source) => {
+          const matches = source.drills
+            .filter((title) => {
+              const key = title.toLowerCase();
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            })
+            .map((title) => ({ title, number: ++catalogIndex }))
+            .filter(({ title }) => title.toLowerCase().includes(needle));
+          if (!matches.length) return;
+
+          const label = document.createElement("p");
+          label.className = "source-label";
+          label.textContent = source.label;
+          list.appendChild(label);
+
+          matches.forEach(({ title, number }) => {
+            const ready = title === readyDrill;
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = `drill-item${ready ? " active" : ""}`;
+            button.disabled = !ready;
+            button.setAttribute("aria-label", ready ? `${title}, selected` : `${title}, coming soon`);
+            if (ready) button.setAttribute("aria-current", "true");
+            button.innerHTML = `<span class="drill-number">${String(number).padStart(2, "0")}</span><span class="drill-title">${title}</span><span class="status-pill">${ready ? "Ready" : "Soon"}</span>`;
+            list.appendChild(button);
+            visibleCount += 1;
+          });
+        });
+
+        count.textContent = String(visibleCount);
+        empty.style.display = visibleCount ? "none" : "block";
+      }
+
+      search.addEventListener("input", () => renderDrills(search.value));
+
+      const stepTitles = ["Start in three lanes", "Pass and cut behind", "Keep the weave moving", "Finish at the rim"];
+      const stepFrames = [
+        { focus: 5, ball: 1, players: { 1: [5, 50], 2: [5, 29], 3: [5, 71] } },
+        { focus: 29, ball: 2, players: { 1: [25, 40], 2: [30, 29], 3: [27, 71] } },
+        { focus: 52, ball: 3, players: { 1: [45, 32], 2: [47, 58], 3: [54, 70] } },
+        { focus: 84, ball: 1, players: { 1: [84, 50], 2: [78, 34], 3: [78, 66] } }
+      ];
+      let currentStep = 1;
+
+      function trackCourt(focusPercent) {
+        const sceneWidth = courtScene.getBoundingClientRect().width;
+        const stageWidth = courtStage.getBoundingClientRect().width;
+        const desired = (stageWidth / 2) - (sceneWidth * focusPercent / 100);
+        const minimum = Math.min(0, stageWidth - sceneWidth);
+        courtScene.style.setProperty("--court-track-x", `${Math.max(minimum, Math.min(0, desired))}px`);
+      }
+
+      function animateCourt(step) {
+        const frame = stepFrames[step - 1];
+        document.querySelectorAll(".player").forEach((player) => {
+          const number = Number(player.textContent);
+          const [left, top] = frame.players[number];
+          player.style.left = `${left}%`;
+          player.style.top = `${top}%`;
+        });
+        const [ballLeft, ballTop] = frame.players[frame.ball];
+        courtBall.style.left = `${ballLeft}%`;
+        courtBall.style.top = `${ballTop}%`;
+        courtBall.setAttribute("aria-label", `Basketball moving to player ${frame.ball}`);
+        trackCourt(frame.focus);
+      }
+
+      function selectStep(step) {
+        currentStep = step;
+        document.querySelectorAll(".step-button").forEach((item) => {
+          if (Number(item.dataset.step) === step) item.setAttribute("aria-current", "step");
+          else item.removeAttribute("aria-current");
+        });
+        document.querySelector("#step-status-title").textContent = `Step ${step} of 4`;
+        document.querySelector("#step-status-copy").textContent = stepTitles[step - 1];
+        document.querySelector("#court-step-count").textContent = `${step} of 4 · Aerial court view`;
+        document.querySelector("#next-step").setAttribute("aria-label", step === 4 ? "Return to first step" : `Go to step ${step + 1}`);
+        document.querySelector("#next-step-label").textContent = step === 4 ? "Restart" : "Next";
+        animateCourt(step);
+      }
+
+      document.querySelectorAll(".step-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          selectStep(Number(button.dataset.step));
+        });
+      });
+      document.querySelector("#next-step").addEventListener("click", () => selectStep(currentStep === 4 ? 1 : currentStep + 1));
+
+      const lesson = document.querySelector("#lesson");
+      document.querySelectorAll(".view-option").forEach((button) => {
+        button.addEventListener("click", () => {
+          lesson.dataset.layout = button.dataset.layout;
+          document.querySelectorAll(".view-option").forEach((option) => option.setAttribute("aria-pressed", String(option.dataset.layout === button.dataset.layout)));
+          requestAnimationFrame(() => trackCourt(stepFrames[currentStep - 1].focus));
+        });
+      });
+      document.querySelectorAll(".mobile-view-toggle").forEach((button) => button.addEventListener("click", () => {
+        const showCourt = lesson.dataset.mobileView === "list";
+        lesson.dataset.mobileView = showCourt ? "court" : "list";
+        document.querySelectorAll(".mobile-view-toggle").forEach((toggle) => {
+          toggle.textContent = showCourt ? "List view" : "Court view";
+          toggle.setAttribute("aria-label", showCourt ? "Show list view" : "Show court view");
+        });
+        if (showCourt) requestAnimationFrame(() => trackCourt(stepFrames[currentStep - 1].focus));
+      }));
+
+      const courtStage = document.querySelector("#court-stage");
+      const courtScene = document.querySelector("#court-scene");
+      const courtBall = document.querySelector("#court-ball");
+      courtScene.classList.add("no-transition");
+      animateCourt(1);
+      requestAnimationFrame(() => courtScene.classList.remove("no-transition"));
+      window.addEventListener("resize", () => trackCourt(stepFrames[currentStep - 1].focus));
+
+      renderDrills();
+    </script>
+  </body>
+</html>
