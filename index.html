@@ -476,7 +476,7 @@
 
             <section class="court-panel" aria-label="Three-Man Weave court setup">
               <div class="court-header">
-                <div><strong>Starting positions</strong><span id="court-step-count">1 of 4 · Aerial court view</span></div>
+                <div><strong id="court-step-title">Start in three lanes</strong><span>Three-Man Weave</span></div>
                 <div class="view-switch" aria-label="Lesson layout">
                   <button class="view-option" type="button" data-layout="list" aria-pressed="false">List</button>
                   <button class="view-option" type="button" data-layout="court" aria-pressed="false">Court</button>
@@ -627,7 +627,7 @@
         });
         document.querySelector("#step-status-title").textContent = `Step ${step} of 4`;
         document.querySelector("#step-status-copy").textContent = stepTitles[step - 1];
-        document.querySelector("#court-step-count").textContent = `${step} of 4 · Aerial court view`;
+        document.querySelector("#court-step-title").textContent = stepTitles[step - 1];
         document.querySelector("#next-step").setAttribute("aria-label", step === 4 ? "Return to first step" : `Go to step ${step + 1}`);
         document.querySelector("#next-step-label").textContent = step === 4 ? "Restart" : "Next";
         animateCourt(step);
