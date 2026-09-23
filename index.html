@@ -408,7 +408,7 @@
         height: 100%;
         aspect-ratio: 5 / 3;
         transform: translateX(var(--court-track-x, 0px));
-        transition: transform 2s cubic-bezier(.22,.75,.2,1);
+        transition: transform var(--animation-duration, 2s) cubic-bezier(.22,.75,.2,1);
       }
       .court-scene.no-transition,
       .court-scene.no-transition .player,
@@ -429,7 +429,7 @@
         font-size: clamp(15px, 1.5vw, 19px);
         font-weight: 900;
         transform: translate(-50%, -50%);
-        transition: left 2s cubic-bezier(.22,.75,.2,1), top 2s cubic-bezier(.22,.75,.2,1);
+        transition: left var(--animation-duration, 2s) cubic-bezier(.22,.75,.2,1), top var(--animation-duration, 2s) cubic-bezier(.22,.75,.2,1), background-color .3s ease;
       }
       .player[data-team="defense"] { background: var(--blue); box-shadow: 0 8px 20px rgba(3,24,48,.4), 0 0 0 4px rgba(40,120,208,.2); }
       .player[data-team="neutral"] { background: var(--neutral); box-shadow: 0 8px 20px rgba(0,0,0,.35), 0 0 0 4px rgba(115,123,118,.2); }
@@ -445,12 +445,14 @@
         font-size: 14px;
         box-shadow: 0 3px 9px rgba(0,0,0,.45);
         transform: translate(45%, 45%);
-        transition: left 2s cubic-bezier(.22,.75,.2,1), top 2s cubic-bezier(.22,.75,.2,1);
+        transition: left var(--animation-duration, 2s) cubic-bezier(.22,.75,.2,1), top var(--animation-duration, 2s) cubic-bezier(.22,.75,.2,1);
       }
+      .court-ball[hidden] { display: none; }
       .player-1 { left: 5%; top: 50%; }
       .player-2 { left: 5%; top: 29%; }
       .player-3 { left: 5%; top: 71%; }
       .start-label { position: absolute; z-index: 2; left: 1.2%; top: 50%; color: rgba(255,255,255,.72); font-size: 11px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); }
+      .court-scene[data-court-type="half"] .start-label { left: 50%; top: 1.5%; writing-mode: horizontal-tb; transform: translateX(-50%); }
       .court-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 19px; border-top: 1px solid var(--line); }
       .step-status { min-width: 0; }
       .step-status strong { display: block; font-size: 14px; line-height: 1.25; }
@@ -734,14 +736,14 @@
         }
 
         if (readyEntries.length) {
-          appendLabel("Ready drills");
+          appendLabel("Drills");
           readyEntries.forEach(appendEntry);
         }
 
         sources.forEach((source) => {
           const sourceEntries = upcomingEntries.filter((entry) => entry.source === source.label);
           if (!sourceEntries.length) return;
-          appendLabel(source.label);
+          appendLabel(source.label === "Basketball Drills" ? "Coming Soon" : source.label);
           sourceEntries.forEach(appendEntry);
         });
 
@@ -756,6 +758,7 @@
       const courtScene = document.querySelector("#court-scene");
       const courtBall = document.querySelector("#court-ball");
       let currentStep = 1;
+      let teamChangeTimer;
 
       function renderLesson(drill) {
         document.querySelector("#lesson-categories").textContent = drill.categories.join(" · ");
@@ -785,6 +788,7 @@
         courtImage.src = drill.court.asset;
         courtImage.alt = `Aerial ${drill.court.label.toLowerCase()} basketball court diagram`;
         courtScene.style.aspectRatio = drill.court.aspectRatio;
+        courtScene.dataset.courtType = drill.court.type;
         document.querySelector("#step-status-title").textContent = `Step 1 of ${drill.steps.length}`;
         document.querySelector("#step-status-copy").textContent = drill.steps[0].description;
         document.querySelector("#court-step-title").textContent = drill.steps[0].title;
@@ -825,22 +829,44 @@
 
       function animateCourt(step, previousStep = step) {
         const frame = stepFrames[step - 1];
+        const duration = frame.duration || 2000;
+        const sequentialForward = previousStep === step - 1;
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        window.clearTimeout(teamChangeTimer);
+        courtScene.style.setProperty("--animation-duration", `${duration}ms`);
         document.querySelectorAll(".player").forEach((player) => {
           player.getAnimations().forEach((animation) => animation.cancel());
           const [left, top] = frame.positions[player.dataset.playerId];
           player.style.left = `${left}%`;
           player.style.top = `${top}%`;
         });
-        if (previousStep === step - 1 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        if (sequentialForward && !reducedMotion) {
           frame.movements.filter((movement) => movement.path === "curve-behind").forEach((movement) => {
             const player = document.querySelector(`[data-player-id="${movement.player}"]`);
             player.animate([
               { transform: "translate(-50%, -50%) translateX(0)" },
               { transform: `translate(-50%, -50%) translateX(${movement.offsetX || -58}px)`, offset: .52 },
               { transform: "translate(-50%, -50%) translateX(0)" }
-            ], { duration: 2000, easing: "cubic-bezier(.22,.75,.2,1)" });
+            ], { duration, easing: "cubic-bezier(.22,.75,.2,1)" });
+          });
+          frame.movements.filter((movement) => movement.path === "curve-via").forEach((movement) => {
+            const player = document.querySelector(`[data-player-id="${movement.player}"]`);
+            player.animate(movement.points.map((point) => ({
+              left: `${point.position[0]}%`,
+              top: `${point.position[1]}%`,
+              transform: "translate(-50%, -50%)",
+              offset: point.offset
+            })), { duration, easing: "linear" });
           });
         }
+        const teams = frame.teams || Object.fromEntries(activeDrill.players.map((player) => [player.id, player.team]));
+        const applyTeams = () => document.querySelectorAll(".player").forEach((player) => {
+          const team = teams[player.dataset.playerId];
+          player.dataset.team = team;
+          player.setAttribute("aria-label", `${team} player ${player.textContent}`);
+        });
+        if (sequentialForward && frame.teamChangeDelay && !reducedMotion) teamChangeTimer = window.setTimeout(applyTeams, frame.teamChangeDelay);
+        else applyTeams();
         courtBall.hidden = !frame.ball;
         if (frame.ball) {
           const [ballLeft, ballTop] = frame.positions[frame.ball];
