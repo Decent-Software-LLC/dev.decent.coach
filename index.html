@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0d100e">
     <title>Basketball Drills</title>
+    <script>
+      (function () {
+        let preference = "system";
+        try { preference = localStorage.getItem("basketball-drills-theme") || "system"; } catch (error) {}
+        const systemTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = preference === "system" ? systemTheme : preference;
+        document.documentElement.dataset.themePreference = preference;
+      }());
+    </script>
     <style>
       :root {
         color-scheme: dark;
@@ -19,6 +28,58 @@
         --blue: #2878d0;
         --neutral: #737b76;
         --court: #8a4f2b;
+        --topbar-bg: rgba(13, 16, 14, 0.94);
+        --library-bg: #111512;
+        --control-bg: #191e1a;
+        --raised-bg: #222824;
+        --card-bg: rgba(23,27,24,.92);
+        --court-wrap-bg: #121613;
+        --soft-text: #d9dcd8;
+        --copy-text: #aeb3ae;
+        --subtle-text: #939a94;
+        --dim-text: #727972;
+        --hover-bg: rgba(255,255,255,.04);
+        --pill-bg: rgba(255,255,255,.06);
+        --switch-bg: rgba(255,255,255,.035);
+        --marker-text: #aeb4ae;
+        --pill-text: #989e99;
+        --meta-text: #c8ccc8;
+        --label-text: #7f867f;
+        --step-number-text: #cbd0cb;
+        --phase-text: #7c837d;
+        --hover-border: rgba(255,255,255,.22);
+        --card-shadow: 0 24px 70px rgba(0,0,0,.24);
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
+        --bg: #f3f5f0;
+        --panel: #ffffff;
+        --panel-2: #e9ede7;
+        --ink: #182019;
+        --muted: #5f6961;
+        --line: rgba(20, 34, 22, 0.15);
+        --lime: #668e00;
+        --topbar-bg: rgba(250, 252, 248, 0.95);
+        --library-bg: #e9ede7;
+        --control-bg: #ffffff;
+        --raised-bg: #dfe5dd;
+        --card-bg: rgba(255,255,255,.96);
+        --court-wrap-bg: #e7ebe5;
+        --soft-text: #313a32;
+        --copy-text: #4e5a50;
+        --subtle-text: #606b62;
+        --dim-text: #68736a;
+        --hover-bg: rgba(17,30,18,.06);
+        --pill-bg: rgba(17,30,18,.07);
+        --switch-bg: rgba(17,30,18,.04);
+        --marker-text: #4f5b51;
+        --pill-text: #58635a;
+        --meta-text: #39443b;
+        --label-text: #5f6a61;
+        --step-number-text: #39443b;
+        --phase-text: #5f6a61;
+        --hover-border: rgba(20,34,22,.26);
+        --card-shadow: 0 22px 55px rgba(32,45,34,.12);
       }
 
       * { box-sizing: border-box; }
@@ -41,7 +102,7 @@
         gap: 20px;
         padding: 0 24px;
         border-bottom: 1px solid var(--line);
-        background: rgba(13, 16, 14, 0.94);
+        background: var(--topbar-bg);
         backdrop-filter: blur(18px);
       }
       .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
@@ -59,6 +120,39 @@
       }
       .brand h1 { margin: 0; font-size: 18px; letter-spacing: -0.02em; }
       .brand p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+      .header-menu { position: relative; }
+      .menu-button {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--control-bg);
+        color: var(--ink);
+        cursor: pointer;
+      }
+      .menu-button:hover, .menu-button[aria-expanded="true"] { border-color: rgba(200,255,77,.55); color: var(--lime); }
+      .menu-button:focus-visible, .theme-option:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+      .theme-menu {
+        position: absolute;
+        z-index: 20;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 174px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--card-bg);
+        box-shadow: var(--card-shadow);
+        backdrop-filter: blur(18px);
+      }
+      .theme-menu[hidden] { display: none; }
+      .theme-menu-label { margin: 0 0 8px; color: var(--muted); font-size: 11px; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }
+      .theme-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 11px; background: var(--switch-bg); }
+      .theme-option { display: grid; min-width: 0; height: 38px; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+      .theme-option:hover { color: var(--ink); background: var(--hover-bg); }
+      .theme-option[aria-pressed="true"] { background: var(--lime); color: #11150f; }
       .workspace {
         display: grid;
         grid-template-columns: minmax(260px, 310px) minmax(0, 1fr);
@@ -71,7 +165,7 @@
         grid-template-rows: auto minmax(0, 1fr);
         min-height: 0;
         border-right: 1px solid var(--line);
-        background: #111512;
+        background: var(--library-bg);
       }
       .library-heading { position: relative; padding: 24px 54px 14px 20px; }
       .library-toggle {
@@ -84,7 +178,7 @@
         place-items: center;
         border: 1px solid var(--line);
         border-radius: 10px;
-        background: #191e1a;
+        background: var(--control-bg);
         color: var(--muted);
         cursor: pointer;
       }
@@ -108,7 +202,7 @@
       .library-heading p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
       #drill-library-content { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
       .search-wrap { position: relative; margin: 0 16px 14px; }
-      .search-wrap svg { position: absolute; top: 50%; left: 14px; color: #747b75; transform: translateY(-50%); }
+      .search-wrap svg { position: absolute; top: 50%; left: 14px; color: var(--dim-text); transform: translateY(-50%); }
       .search {
         width: 100%;
         height: 42px;
@@ -116,16 +210,16 @@
         border: 1px solid var(--line);
         border-radius: 13px;
         outline: none;
-        background: #191e1a;
+        background: var(--control-bg);
         color: var(--ink);
       }
-      .search::placeholder { color: #727972; }
+      .search::placeholder { color: var(--dim-text); }
       .search:focus { border-color: rgba(200,255,77,.7); box-shadow: 0 0 0 3px rgba(200,255,77,.12); }
-      .search-count { position: absolute; top: 50%; right: 12px; color: #747b75; font-size: 12px; transform: translateY(-50%); }
+      .search-count { position: absolute; top: 50%; right: 12px; color: var(--dim-text); font-size: 12px; transform: translateY(-50%); }
       .drill-list { overflow-y: auto; padding: 0 12px 20px; scrollbar-color: #3b423c transparent; }
       .source-label {
         margin: 15px 8px 7px;
-        color: #727972;
+        color: var(--dim-text);
         font-size: 11px;
         font-weight: 850;
         letter-spacing: .12em;
@@ -146,7 +240,7 @@
       }
       .drill-item + .drill-item { margin-top: 3px; }
       .drill-item:not(:disabled) { cursor: pointer; }
-      .drill-item:not(:disabled):hover { background: rgba(255,255,255,.04); }
+      .drill-item:not(:disabled):hover { background: var(--hover-bg); }
       .drill-item.active { border-color: rgba(200,255,77,.43); background: rgba(200,255,77,.09); }
       .drill-number {
         display: grid;
@@ -154,19 +248,19 @@
         height: 30px;
         place-items: center;
         border-radius: 9px;
-        background: #222824;
-        color: #aeb4ae;
+        background: var(--raised-bg);
+        color: var(--marker-text);
         font-size: 12px;
         font-weight: 800;
       }
       .active .drill-number { background: var(--lime); color: #10140f; }
-      .drill-title { overflow: hidden; color: #d9dcd8; font-size: 14px; font-weight: 730; line-height: 1.25; text-overflow: ellipsis; }
+      .drill-title { overflow: hidden; color: var(--soft-text); font-size: 14px; font-weight: 730; line-height: 1.25; text-overflow: ellipsis; }
       .drill-item:disabled { opacity: .42; }
       .status-pill {
         padding: 4px 6px;
         border-radius: 999px;
-        background: rgba(255,255,255,.06);
-        color: #989e99;
+        background: var(--pill-bg);
+        color: var(--pill-text);
         font-size: 10px;
         font-weight: 850;
         letter-spacing: .05em;
@@ -189,12 +283,12 @@
       .lesson-copy, .court-panel {
         border: 1px solid var(--line);
         border-radius: 22px;
-        background: rgba(23,27,24,.92);
-        box-shadow: 0 24px 70px rgba(0,0,0,.24);
+        background: var(--card-bg);
+        box-shadow: var(--card-shadow);
       }
       .lesson-copy { display: flex; flex-direction: column; padding: 26px; }
       .lesson-copy h2 { margin: 0; font-size: clamp(28px, 3vw, 42px); line-height: .98; letter-spacing: -.055em; }
-      .summary { margin: 14px 0 18px; color: #aeb3ae; font-size: 15px; line-height: 1.6; }
+      .summary { margin: 14px 0 18px; color: var(--copy-text); font-size: 15px; line-height: 1.6; }
       .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
       .meta-chip {
         display: inline-flex;
@@ -203,12 +297,12 @@
         padding: 8px 10px;
         border: 1px solid var(--line);
         border-radius: 999px;
-        color: #c8ccc8;
+        color: var(--meta-text);
         font-size: 12px;
         font-weight: 750;
       }
       .meta-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
-      .step-label { margin: 0 0 10px; color: #7f867f; font-size: 12px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+      .step-label { margin: 0 0 10px; color: var(--label-text); font-size: 12px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
       .steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
       .step-button {
         display: grid;
@@ -219,11 +313,11 @@
         padding: 11px;
         border: 1px solid var(--line);
         border-radius: 13px;
-        background: #191e1a;
+        background: var(--control-bg);
         text-align: left;
         cursor: pointer;
       }
-      .step-button:hover { border-color: rgba(255,255,255,.22); }
+      .step-button:hover { border-color: var(--hover-border); }
       .step-button[aria-current="step"] { border-color: rgba(200,255,77,.55); background: rgba(200,255,77,.07); }
       .step-number {
         display: grid;
@@ -231,21 +325,21 @@
         height: 32px;
         place-items: center;
         border-radius: 10px;
-        background: #282e29;
-        color: #cbd0cb;
+        background: var(--raised-bg);
+        color: var(--step-number-text);
         font-size: 13px;
         font-weight: 850;
       }
       [aria-current="step"] .step-number { background: var(--lime); color: #11150f; }
       .step-copy strong { display: block; margin: 1px 0 3px; font-size: 14px; }
-      .step-copy span { display: block; color: #939a94; font-size: 13px; line-height: 1.45; }
+      .step-copy span { display: block; color: var(--subtle-text); font-size: 13px; line-height: 1.45; }
       .next-phase {
         display: flex;
         align-items: center;
         gap: 10px;
         margin-top: auto;
         padding-top: 22px;
-        color: #7c837d;
+        color: var(--phase-text);
         font-size: 12px;
       }
       .next-phase svg { color: var(--lime); }
@@ -259,7 +353,7 @@
         padding: 3px;
         border: 1px solid var(--line);
         border-radius: 10px;
-        background: rgba(255,255,255,.035);
+        background: var(--switch-bg);
       }
       .view-option {
         min-height: 28px;
@@ -277,7 +371,7 @@
       .lesson[data-layout="list"] .lesson-copy > .view-switch { display: inline-flex; align-self: flex-end; margin-bottom: 12px; }
       .mobile-view-toggle { display: none; }
       .lesson-copy > .mobile-view-toggle { align-self: flex-end; margin-bottom: 12px; }
-      .court-wrap { position: relative; min-height: 0; padding: 24px; background: #121613; }
+      .court-wrap { position: relative; min-height: 0; padding: 24px; background: var(--court-wrap-bg); }
       .court-stage {
         position: relative;
         width: 100%;
@@ -427,6 +521,19 @@
             <p>Learn it. Teach it. Run it.</p>
           </div>
         </div>
+        <div class="header-menu" id="header-menu">
+          <button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="theme-menu" aria-label="Open appearance menu" title="Appearance">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="theme-menu" id="theme-menu" hidden>
+            <p class="theme-menu-label">Appearance</p>
+            <div class="theme-options" aria-label="Color theme">
+              <button class="theme-option" type="button" data-theme-choice="light" aria-label="Use light theme" title="Light" aria-pressed="false"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+              <button class="theme-option" type="button" data-theme-choice="dark" aria-label="Use dark theme" title="Dark" aria-pressed="false"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.2 15.2A8.5 8.5 0 0 1 8.8 3.8 8.5 8.5 0 1 0 20.2 15.2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
+              <button class="theme-option" type="button" data-theme-choice="system" aria-label="Follow system theme" title="System" aria-pressed="false"><rect x="3" y="4" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+            </div>
+          </div>
+        </div>
       </header>
 
       <div class="workspace" id="workspace">
@@ -516,6 +623,49 @@
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
       const drillLibrary = window.BASKETBALL_DRILLS || {};
       const activeDrill = drillLibrary["three-man-weave"];
+
+      const themeMedia = window.matchMedia("(prefers-color-scheme: light)");
+      const themeMenu = document.querySelector("#theme-menu");
+      const menuButton = document.querySelector("#menu-button");
+      const themeOptions = document.querySelectorAll("[data-theme-choice]");
+
+      function storedThemePreference() {
+        try { return localStorage.getItem("basketball-drills-theme") || "system"; }
+        catch (error) { return "system"; }
+      }
+
+      function applyTheme(preference, persist = false) {
+        const effectiveTheme = preference === "system" ? (themeMedia.matches ? "light" : "dark") : preference;
+        document.documentElement.dataset.theme = effectiveTheme;
+        document.documentElement.dataset.themePreference = preference;
+        document.querySelector('meta[name="theme-color"]').content = effectiveTheme === "light" ? "#f3f5f0" : "#0d100e";
+        themeOptions.forEach((option) => option.setAttribute("aria-pressed", String(option.dataset.themeChoice === preference)));
+        if (persist) {
+          try { localStorage.setItem("basketball-drills-theme", preference); } catch (error) {}
+        }
+      }
+
+      function setThemeMenu(open) {
+        themeMenu.hidden = !open;
+        menuButton.setAttribute("aria-expanded", String(open));
+        menuButton.setAttribute("aria-label", open ? "Close appearance menu" : "Open appearance menu");
+      }
+
+      menuButton.addEventListener("click", () => setThemeMenu(themeMenu.hidden));
+      themeOptions.forEach((option) => option.addEventListener("click", () => {
+        applyTheme(option.dataset.themeChoice, true);
+        setThemeMenu(false);
+      }));
+      document.addEventListener("click", (event) => {
+        if (!document.querySelector("#header-menu").contains(event.target)) setThemeMenu(false);
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") setThemeMenu(false);
+      });
+      themeMedia.addEventListener("change", () => {
+        if (storedThemePreference() === "system") applyTheme("system");
+      });
+      applyTheme(storedThemePreference());
 
       const list = document.querySelector("#drill-list");
       const search = document.querySelector("#drill-search");
