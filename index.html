@@ -274,6 +274,8 @@
         text-transform: uppercase;
       }
       .active .status-pill { background: rgba(var(--accent-rgb),.13); color: var(--lime); }
+      .drill-chevron { display: grid; width: 26px; height: 26px; place-items: center; color: var(--muted); }
+      .drill-item:not(:disabled):hover .drill-chevron, .drill-item.active .drill-chevron { color: var(--lime); }
       .empty { display: none; padding: 28px 18px; color: var(--muted); font-size: 15px; text-align: center; }
 
       main {
@@ -551,7 +553,7 @@
             </button>
             <p class="eyebrow">Drill library</p>
             <h2>Choose a drill</h2>
-            <p>One lesson is ready. More guided drills are coming next.</p>
+            <p id="library-summary">Three lessons are ready. More guided drills are coming next.</p>
           </div>
           <div id="drill-library-content">
             <label class="search-wrap">
@@ -626,10 +628,12 @@
 
     <script src="data/catalog.js"></script>
     <script src="data/drills/three-man-weave.js"></script>
+    <script src="data/drills/close-out-drill.js"></script>
+    <script src="data/drills/triangle-passing.js"></script>
     <script>
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
       const drillLibrary = window.BASKETBALL_DRILLS || {};
-      const activeDrill = drillLibrary["three-man-weave"];
+      let activeDrill = drillLibrary["three-man-weave"];
 
       const themeMedia = window.matchMedia("(prefers-color-scheme: light)");
       const themeMenu = document.querySelector("#theme-menu");
@@ -679,6 +683,15 @@
       const count = document.querySelector("#search-count");
       const empty = document.querySelector("#empty-state");
       const readyDrills = new Map(Object.values(drillLibrary).map((drill) => [drill.title, drill]));
+      document.querySelector("#library-summary").textContent = `${readyDrills.size} ${readyDrills.size === 1 ? "lesson is" : "lessons are"} ready. More guided drills are coming next.`;
+      const catalogEntries = [];
+      const catalogTitles = new Set();
+      sources.forEach((source) => source.drills.forEach((title) => {
+        const key = title.toLowerCase();
+        if (catalogTitles.has(key)) return;
+        catalogTitles.add(key);
+        catalogEntries.push({ title, source: source.label, number: catalogEntries.length + 1 });
+      }));
       const workspace = document.querySelector("#workspace");
       const libraryToggle = document.querySelector("#library-toggle");
 
@@ -692,48 +705,53 @@
       function renderDrills(query = "") {
         list.querySelectorAll(":scope > :not(#empty-state)").forEach((node) => node.remove());
         const needle = query.trim().toLowerCase();
-        let visibleCount = 0;
-        let catalogIndex = 0;
-        const seen = new Set();
+        const matches = catalogEntries.filter(({ title }) => title.toLowerCase().includes(needle));
+        const readyEntries = matches.filter(({ title }) => readyDrills.has(title));
+        const upcomingEntries = matches.filter(({ title }) => !readyDrills.has(title));
 
-        sources.forEach((source) => {
-          const matches = source.drills
-            .filter((title) => {
-              const key = title.toLowerCase();
-              if (seen.has(key)) return false;
-              seen.add(key);
-              return true;
-            })
-            .map((title) => ({ title, number: ++catalogIndex }))
-            .filter(({ title }) => title.toLowerCase().includes(needle));
-          if (!matches.length) return;
-
+        function appendLabel(text) {
           const label = document.createElement("p");
           label.className = "source-label";
-          label.textContent = source.label;
+          label.textContent = text;
           list.appendChild(label);
+        }
 
-          matches.forEach(({ title, number }) => {
-            const ready = readyDrills.has(title);
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = `drill-item${ready ? " active" : ""}`;
-            button.disabled = !ready;
-            button.setAttribute("aria-label", ready ? `${title}, selected` : `${title}, coming soon`);
-            if (ready) button.setAttribute("aria-current", "true");
-            button.innerHTML = `<span class="drill-number">${String(number).padStart(2, "0")}</span><span class="drill-title">${title}</span><span class="status-pill">${ready ? "Ready" : "Soon"}</span>`;
-            list.appendChild(button);
-            visibleCount += 1;
-          });
+        function appendEntry({ title, number }) {
+          const drill = readyDrills.get(title);
+          const selected = drill?.id === activeDrill.id;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `drill-item${selected ? " active" : ""}`;
+          button.disabled = !drill;
+          button.setAttribute("aria-label", drill ? `${title}, ${selected ? "selected" : "ready"}` : `${title}, coming soon`);
+          if (selected) button.setAttribute("aria-current", "true");
+          const trailing = drill
+            ? '<span class="drill-chevron" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'
+            : '<span class="status-pill">Soon</span>';
+          button.innerHTML = `<span class="drill-number">${String(number).padStart(2, "0")}</span><span class="drill-title">${title}</span>${trailing}`;
+          if (drill) button.addEventListener("click", () => selectDrill(drill.id));
+          list.appendChild(button);
+        }
+
+        if (readyEntries.length) {
+          appendLabel("Ready drills");
+          readyEntries.forEach(appendEntry);
+        }
+
+        sources.forEach((source) => {
+          const sourceEntries = upcomingEntries.filter((entry) => entry.source === source.label);
+          if (!sourceEntries.length) return;
+          appendLabel(source.label);
+          sourceEntries.forEach(appendEntry);
         });
 
-        count.textContent = String(visibleCount);
-        empty.style.display = visibleCount ? "none" : "block";
+        count.textContent = String(matches.length);
+        empty.style.display = matches.length ? "none" : "block";
       }
 
       search.addEventListener("input", () => renderDrills(search.value));
 
-      const stepFrames = activeDrill.steps;
+      let stepFrames = activeDrill.steps;
       const courtStage = document.querySelector("#court-stage");
       const courtScene = document.querySelector("#court-scene");
       const courtBall = document.querySelector("#court-ball");
@@ -770,11 +788,36 @@
         document.querySelector("#step-status-title").textContent = `Step 1 of ${drill.steps.length}`;
         document.querySelector("#step-status-copy").textContent = drill.steps[0].description;
         document.querySelector("#court-step-title").textContent = drill.steps[0].title;
+        document.querySelector("#next-step").setAttribute("aria-label", "Go to step 2");
+        document.querySelector("#next-step-label").textContent = "Next";
+      }
+
+      function bindStepButtons() {
+        document.querySelectorAll(".step-button").forEach((button) => {
+          button.addEventListener("click", () => selectStep(Number(button.dataset.step)));
+        });
+      }
+
+      function selectDrill(drillId) {
+        if (!drillLibrary[drillId] || activeDrill.id === drillId) return;
+        activeDrill = drillLibrary[drillId];
+        stepFrames = activeDrill.steps;
+        currentStep = 1;
+        courtScene.classList.add("no-transition");
+        renderLesson(activeDrill);
+        bindStepButtons();
+        animateCourt(1);
+        requestAnimationFrame(() => courtScene.classList.remove("no-transition"));
+        renderDrills(search.value);
       }
 
       function trackCourt(focusPercent) {
         const sceneWidth = courtScene.getBoundingClientRect().width;
         const stageWidth = courtStage.getBoundingClientRect().width;
+        if (sceneWidth <= stageWidth) {
+          courtScene.style.setProperty("--court-track-x", `${(stageWidth - sceneWidth) / 2}px`);
+          return;
+        }
         const desired = (stageWidth / 2) - (sceneWidth * focusPercent / 100);
         const minimum = Math.min(0, stageWidth - sceneWidth);
         courtScene.style.setProperty("--court-track-x", `${Math.max(minimum, Math.min(0, desired))}px`);
@@ -824,12 +867,7 @@
       }
 
       renderLesson(activeDrill);
-
-      document.querySelectorAll(".step-button").forEach((button) => {
-        button.addEventListener("click", () => {
-          selectStep(Number(button.dataset.step));
-        });
-      });
+      bindStepButtons();
       document.querySelector("#next-step").addEventListener("click", () => selectStep(currentStep === stepFrames.length ? 1 : currentStep + 1));
 
       const lesson = document.querySelector("#lesson");
