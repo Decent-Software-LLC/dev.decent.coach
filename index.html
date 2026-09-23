@@ -206,6 +206,21 @@
       #drill-library-content { opacity: 1; visibility: visible; transform: translateX(0); transition: opacity 120ms ease, transform 180ms ease, visibility 0s; }
       .library-collapsed .library-heading > :not(.library-toggle),
       .library-collapsed #drill-library-content { opacity: 0; visibility: hidden; pointer-events: none; transform: translateX(-14px); transition: opacity 100ms ease, transform 160ms ease, visibility 0s linear 160ms; }
+      @media (min-width: 721px) {
+        .library-collapsed .library-heading .eyebrow {
+          position: absolute;
+          top: 72px;
+          left: 50px;
+          margin: 0;
+          opacity: 1;
+          visibility: visible;
+          transform: rotate(90deg);
+          transform-origin: left top;
+          white-space: nowrap;
+          pointer-events: none;
+          transition: opacity 120ms ease 80ms;
+        }
+      }
       .eyebrow {
         margin: 0 0 8px;
         color: var(--lime);
@@ -222,7 +237,7 @@
       .search {
         width: 100%;
         height: 42px;
-        padding: 0 40px;
+        padding: 0 14px 0 40px;
         border: 1px solid var(--line);
         border-radius: 13px;
         outline: none;
@@ -231,7 +246,6 @@
       }
       .search::placeholder { color: var(--dim-text); }
       .search:focus { border-color: rgba(var(--accent-rgb),.7); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),.12); }
-      .search-count { position: absolute; top: 50%; right: 12px; color: var(--dim-text); font-size: 12px; transform: translateY(-50%); }
       .drill-list { overflow-y: auto; padding: 0 12px 20px; scrollbar-color: #3b423c transparent; }
       .source-label {
         margin: 15px 8px 7px;
@@ -254,6 +268,7 @@
         background: transparent;
         text-align: left;
       }
+      .drill-item.upcoming { grid-template-columns: minmax(0,1fr) auto; padding-left: 12px; }
       .drill-item + .drill-item { margin-top: 3px; }
       .drill-item:not(:disabled) { cursor: pointer; }
       .drill-item:not(:disabled):hover { background: var(--hover-bg); }
@@ -545,6 +560,18 @@
         .library-collapsed .library { min-height: 58px; max-height: 58px; }
         .library-collapsed .library-heading { min-height: 58px; }
         .library-collapsed .library-toggle { top: 12px; right: 16px; left: auto; }
+        .library-collapsed .library-heading .eyebrow {
+          position: absolute;
+          top: 21px;
+          left: 16px;
+          margin: 0;
+          opacity: 1;
+          visibility: visible;
+          transform: none;
+          white-space: nowrap;
+          pointer-events: none;
+          transition: opacity 120ms ease 80ms;
+        }
         .drill-list { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 16px; }
         .source-label { display: none; }
         .drill-item { min-width: 210px; margin: 0 !important; }
@@ -618,7 +645,6 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
               <span class="sr-only" hidden>Search drills</span>
               <input class="search" id="drill-search" type="search" placeholder="Search drills" aria-label="Search drills" autocomplete="off">
-              <span class="search-count" id="search-count">136</span>
             </label>
             <div class="drill-list" id="drill-list">
               <p class="empty" id="empty-state">No drills match that search.</p>
@@ -774,7 +800,6 @@
 
       const list = document.querySelector("#drill-list");
       const search = document.querySelector("#drill-search");
-      const count = document.querySelector("#search-count");
       const empty = document.querySelector("#empty-state");
       const readyDrills = new Map(Object.values(drillLibrary).map((drill) => [drill.title, drill]));
       document.querySelector("#library-summary").textContent = `${readyDrills.size} ${readyDrills.size === 1 ? "lesson is" : "lessons are"} ready. More guided drills are coming next.`;
@@ -812,26 +837,26 @@
           list.appendChild(label);
         }
 
-        function appendEntry({ title, number }) {
+        function appendEntry({ title, number }, displayNumber = String(number).padStart(2, "0")) {
           const drill = readyDrills.get(title);
           const selected = drill?.id === activeDrill.id;
           const button = document.createElement("button");
           button.type = "button";
-          button.className = `drill-item${selected ? " active" : ""}`;
+          button.className = `drill-item${selected ? " active" : ""}${drill ? "" : " upcoming"}`;
           button.disabled = !drill;
           button.setAttribute("aria-label", drill ? `${title}, ${selected ? "selected" : "ready"}` : `${title}, coming soon`);
           if (selected) button.setAttribute("aria-current", "true");
           const trailing = drill
             ? '<span class="drill-chevron" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'
             : '<span class="status-pill">Soon</span>';
-          button.innerHTML = `<span class="drill-number">${String(number).padStart(2, "0")}</span><span class="drill-title">${title}</span>${trailing}`;
+          button.innerHTML = `${drill ? `<span class="drill-number">${displayNumber}</span>` : ""}<span class="drill-title">${title}</span>${trailing}`;
           if (drill) button.addEventListener("click", () => selectDrill(drill.id));
           list.appendChild(button);
         }
 
         if (readyEntries.length) {
           appendLabel("Drills");
-          readyEntries.forEach(appendEntry);
+          readyEntries.forEach((entry, index) => appendEntry(entry, String(index + 1)));
         }
 
         sources.forEach((source) => {
@@ -841,7 +866,6 @@
           sourceEntries.forEach(appendEntry);
         });
 
-        count.textContent = String(matches.length);
         empty.style.display = matches.length ? "none" : "block";
       }
 
