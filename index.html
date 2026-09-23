@@ -409,6 +409,45 @@
         pointer-events: none;
         background: repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, transparent 1px 38px);
       }
+      .drill-info-button {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        z-index: 6;
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border: 1px solid rgba(255,255,255,.55);
+        border-radius: 50%;
+        background: rgba(17,21,18,.78);
+        color: white;
+        font-family: Georgia, serif;
+        font-size: 21px;
+        font-weight: 700;
+        cursor: pointer;
+        backdrop-filter: blur(8px);
+      }
+      .drill-info-button:hover { background: var(--lime); color: var(--accent-ink); }
+      .drill-info-button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+      .drill-info-button[hidden] { display: none; }
+      .drill-info-modal {
+        width: min(520px, calc(100vw - 32px));
+        max-height: calc(100vh - 48px);
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--card-bg);
+        color: var(--ink);
+        box-shadow: 0 24px 80px rgba(0,0,0,.45);
+      }
+      .drill-info-modal::backdrop { background: rgba(7,10,8,.68); backdrop-filter: blur(4px); }
+      .drill-info-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 22px; border-bottom: 1px solid var(--line); }
+      .drill-info-header h2 { margin: 0; font-size: 22px; letter-spacing: -.03em; }
+      .drill-info-close { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--control-bg); color: var(--ink); font-size: 22px; cursor: pointer; }
+      .drill-info-content { display: grid; gap: 22px; padding: 22px; overflow-y: auto; }
+      .drill-info-section h3 { margin: 0 0 10px; color: var(--lime); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+      .drill-info-section ol, .drill-info-section ul { display: grid; gap: 9px; margin: 0; padding-left: 22px; color: var(--copy-text); font-size: 16px; line-height: 1.45; }
       .court-scene {
         position: absolute;
         top: 0;
@@ -630,6 +669,7 @@
                     <div class="court-ball" id="court-ball" aria-label="Basketball">🏀</div>
                     <span class="start-label">Baseline start</span>
                   </div>
+                  <button class="drill-info-button" id="drill-info-button" type="button" aria-label="Show drill variations and points of emphasis" title="Drill details" hidden>i</button>
                 </div>
               </div>
               <div class="court-footer">
@@ -645,10 +685,18 @@
       </div>
     </div>
 
+    <dialog class="drill-info-modal" id="drill-info-modal" aria-labelledby="drill-info-title">
+      <div class="drill-info-header">
+        <h2 id="drill-info-title">Drill details</h2>
+        <button class="drill-info-close" id="drill-info-close" type="button" aria-label="Close drill details">×</button>
+      </div>
+      <div class="drill-info-content" id="drill-info-content"></div>
+    </dialog>
+
     <script src="data/catalog.js"></script>
     <script src="data/drills/three-man-weave.js"></script>
     <script src="data/drills/close-out-drill.js"></script>
-    <script src="data/drills/triangle-passing.js"></script>
+    <script src="data/drills/triangle-passing.js?v=6"></script>
     <script>
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
       const drillLibrary = window.BASKETBALL_DRILLS || {};
@@ -776,6 +824,11 @@
       const courtStage = document.querySelector("#court-stage");
       const courtScene = document.querySelector("#court-scene");
       const courtBall = document.querySelector("#court-ball");
+      const drillInfoButton = document.querySelector("#drill-info-button");
+      const drillInfoModal = document.querySelector("#drill-info-modal");
+      const drillInfoTitle = document.querySelector("#drill-info-title");
+      const drillInfoContent = document.querySelector("#drill-info-content");
+      const drillInfoClose = document.querySelector("#drill-info-close");
       const playDrillButton = document.querySelector("#play-drill");
       const playIcon = document.querySelector("#play-icon");
       const pauseIcon = document.querySelector("#pause-icon");
@@ -857,6 +910,11 @@
         document.querySelector("#court-step-title").textContent = drill.steps[0].title;
         document.querySelector("#next-step").setAttribute("aria-label", "Go to step 2");
         document.querySelector("#next-step-label").textContent = "Next";
+        const variations = drill.variations || [];
+        const points = drill.pointsOfEmphasis || [];
+        drillInfoButton.hidden = !variations.length && !points.length;
+        drillInfoTitle.textContent = `${drill.title} details`;
+        drillInfoContent.innerHTML = `${variations.length ? `<section class="drill-info-section"><h3>Variations</h3><ol>${variations.map((item) => `<li>${item}</li>`).join("")}</ol></section>` : ""}${points.length ? `<section class="drill-info-section"><h3>Points of Emphasis</h3><ul>${points.map((item) => `<li>${item}</li>`).join("")}</ul></section>` : ""}`;
       }
 
       function bindStepButtons() {
@@ -895,10 +953,12 @@
 
       function animateCourt(step, previousStep = step) {
         const frame = stepFrames[step - 1];
+        const previousFrame = stepFrames[previousStep - 1] || frame;
         const duration = frame.duration || 2000;
         const sequentialForward = previousStep === step - 1;
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         window.clearTimeout(teamChangeTimer);
+        courtBall.getAnimations().forEach((animation) => animation.cancel());
         courtScene.style.setProperty("--animation-duration", `${duration}ms`);
         document.querySelectorAll(".player").forEach((player) => {
           player.getAnimations().forEach((animation) => animation.cancel());
@@ -924,6 +984,26 @@
               offset: point.offset
             })), { duration, easing: "linear" });
           });
+          frame.movements.filter((movement) => movement.path === "staged").forEach((movement) => {
+            const player = document.querySelector(`[data-player-id="${movement.player}"]`);
+            const [startLeft, startTop] = previousFrame.positions[movement.player];
+            const [endLeft, endTop] = frame.positions[movement.player];
+            player.animate([
+              { left: `${startLeft}%`, top: `${startTop}%`, offset: 0 },
+              { left: `${startLeft}%`, top: `${startTop}%`, offset: movement.startOffset },
+              { left: `${endLeft}%`, top: `${endTop}%`, offset: 1 }
+            ], { duration, easing: "cubic-bezier(.22,.75,.2,1)" });
+          });
+          if (frame.ballArrival && frame.ball) {
+            const receiver = document.querySelector(`[data-player-id="${frame.ball}"]`);
+            const [startLeft, startTop] = previousFrame.positions[frame.ball];
+            const [endLeft, endTop] = frame.positions[frame.ball];
+            receiver.animate([
+              { left: `${startLeft}%`, top: `${startTop}%`, offset: 0 },
+              { left: `${endLeft}%`, top: `${endTop}%`, offset: frame.ballArrival },
+              { left: `${endLeft}%`, top: `${endTop}%`, offset: 1 }
+            ], { duration, easing: "cubic-bezier(.22,.75,.2,1)" });
+          }
         }
         const teams = frame.teams || Object.fromEntries(activeDrill.players.map((player) => [player.id, player.team]));
         const applyTeams = () => document.querySelectorAll(".player").forEach((player) => {
@@ -935,10 +1015,18 @@
         else applyTeams();
         courtBall.hidden = !frame.ball;
         if (frame.ball) {
-          const [ballLeft, ballTop] = frame.positions[frame.ball];
+          const [ballLeft, ballTop] = frame.ballPosition || frame.positions[frame.ball];
           courtBall.style.left = `${ballLeft}%`;
           courtBall.style.top = `${ballTop}%`;
           courtBall.setAttribute("aria-label", `Basketball moving to player ${frame.ball}`);
+          if (sequentialForward && frame.ballArrival && previousFrame.ball && !reducedMotion) {
+            const [startLeft, startTop] = previousFrame.ballPosition || previousFrame.positions[previousFrame.ball];
+            courtBall.animate([
+              { left: `${startLeft}%`, top: `${startTop}%`, offset: 0 },
+              { left: `${ballLeft}%`, top: `${ballTop}%`, offset: frame.ballArrival },
+              { left: `${ballLeft}%`, top: `${ballTop}%`, offset: 1 }
+            ], { duration, easing: "cubic-bezier(.22,.75,.2,1)" });
+          }
         }
         trackCourt(frame.focus);
       }
@@ -963,6 +1051,9 @@
       bindStepButtons();
       playDrillButton.addEventListener("click", () => isPlaying ? stopPlayback() : startPlayback());
       document.querySelector("#next-step").addEventListener("click", () => selectStep(currentStep === stepFrames.length ? 1 : currentStep + 1));
+      drillInfoButton.addEventListener("click", () => drillInfoModal.showModal());
+      drillInfoClose.addEventListener("click", () => drillInfoModal.close());
+      drillInfoModal.addEventListener("click", (event) => { if (event.target === drillInfoModal) drillInfoModal.close(); });
 
       const lesson = document.querySelector("#lesson");
       document.querySelectorAll(".view-option").forEach((button) => {
