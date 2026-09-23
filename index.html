@@ -97,6 +97,7 @@
       }
       button, input { font: inherit; }
       button { color: inherit; }
+      [hidden] { display: none !important; }
 
       .app { display: grid; grid-template-rows: 72px minmax(0, 1fr); height: 100%; }
       .topbar {
@@ -501,6 +502,7 @@
       .player-3 { left: 5%; top: 71%; }
       .start-label { position: absolute; z-index: 2; left: 1.2%; top: 50%; color: rgba(255,255,255,.72); font-size: 11px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); }
       .court-scene[data-court-type="half"] .start-label { left: 50%; top: 1.5%; writing-mode: horizontal-tb; transform: translateX(-50%); }
+      .court-scene[data-court-type="welcome"] .start-label { display: none; }
       .court-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 19px; border-top: 1px solid var(--line); }
       .step-status { min-width: 0; }
       .step-status strong { display: block; font-size: 14px; line-height: 1.25; }
@@ -638,7 +640,7 @@
                 <span class="meta-chip">Full court</span>
               </div>
 
-              <p class="step-label">How to run it</p>
+              <p class="step-label" id="step-label">How to run it</p>
               <ol class="steps" id="lesson-steps">
                 <li><button class="step-button" type="button" aria-current="step" data-step="1"><span class="step-number">01</span><span class="step-copy"><strong>Start in three lanes</strong><span>Form three lines on the baseline. Player 1 begins in the middle with the ball.</span></span></button></li>
                 <li><button class="step-button" type="button" data-step="2"><span class="step-number">02</span><span class="step-copy"><strong>Pass and cut behind</strong><span>Pass to an outside lane, then sprint behind the player who received the pass.</span></span></button></li>
@@ -700,7 +702,26 @@
     <script>
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
       const drillLibrary = window.BASKETBALL_DRILLS || {};
-      let activeDrill = drillLibrary["three-man-weave"];
+      const welcomeDrill = {
+        id: "welcome",
+        title: "Welcome Coaches",
+        titleLines: ["Welcome", "Coaches"],
+        categories: ["Decent Coach Drills"],
+        summary: "Decent Coach Drills turns proven basketball exercises into clear, visual lessons. Choose a drill to review its setup, follow each coaching step, and watch every movement unfold on the court.",
+        equipment: { players: 5, basketballs: 1 },
+        court: { type: "welcome", asset: "assets/courts/basketball-fullcourt.svg", aspectRatio: "5 / 3", label: "Full court" },
+        players: [1, 2, 3, 4, 5].map((number) => ({ id: `welcome-${number}`, label: String(number), team: "offense" })),
+        steps: [{
+          title: "Welcome Coaches",
+          description: "Choose a drill from the library to begin a guided lesson.",
+          focus: 50,
+          ball: "welcome-1",
+          ballPosition: [50, 42],
+          positions: { "welcome-1": [50, 20], "welcome-2": [75, 38], "welcome-3": [66, 70], "welcome-4": [34, 70], "welcome-5": [25, 38] },
+          movements: []
+        }]
+      };
+      let activeDrill = welcomeDrill;
 
       const themeMedia = window.matchMedia("(prefers-color-scheme: light)");
       const themeMenu = document.querySelector("#theme-menu");
@@ -836,6 +857,37 @@
       let teamChangeTimer;
       let playbackTimer;
       let isPlaying = false;
+      let welcomeAnimations = [];
+
+      function stopWelcomeAnimation() {
+        welcomeAnimations.forEach((animation) => animation.cancel());
+        welcomeAnimations = [];
+      }
+
+      function startWelcomeAnimation() {
+        stopWelcomeAnimation();
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const circle = [
+          [50, 20], [65, 25], [75, 38], [74, 55], [66, 70], [50, 77],
+          [34, 70], [26, 55], [25, 38], [35, 25], [50, 20]
+        ];
+        document.querySelectorAll('.player[data-player-id^="welcome-"]').forEach((player, index) => {
+          const animation = player.animate(circle.map(([left, top], point) => ({ left: `${left}%`, top: `${top}%`, offset: point / (circle.length - 1) })), {
+            duration: 8000,
+            delay: index * -1600,
+            iterations: Infinity,
+            easing: "linear"
+          });
+          welcomeAnimations.push(animation);
+        });
+        const ballAnimation = courtBall.animate([
+          { left: "50%", top: "39%", offset: 0 },
+          { left: "62%", top: "60%", offset: .333 },
+          { left: "38%", top: "60%", offset: .666 },
+          { left: "50%", top: "39%", offset: 1 }
+        ], { duration: 3600, iterations: Infinity, easing: "linear" });
+        welcomeAnimations.push(ballAnimation);
+      }
 
       function updatePlaybackButton() {
         playIcon.hidden = isPlaying;
@@ -877,11 +929,18 @@
       }
 
       function renderLesson(drill) {
+        const isWelcome = drill.id === "welcome";
         document.querySelector("#lesson-categories").textContent = drill.categories.join(" · ");
         document.querySelector("#lesson-title").innerHTML = (drill.titleLines || [drill.title]).join("<br>");
         document.querySelector("#lesson-summary").textContent = drill.summary;
         document.querySelector("#court-drill-title").textContent = drill.title;
         document.querySelector("#court-panel").setAttribute("aria-label", `${drill.title} court setup`);
+
+        document.querySelector("#lesson-meta").hidden = isWelcome;
+        document.querySelector("#step-label").hidden = isWelcome;
+        document.querySelector("#lesson-steps").hidden = isWelcome;
+        document.querySelector("#next-step").hidden = isWelcome;
+        playDrillButton.hidden = isWelcome;
 
         const playerLabel = `${drill.equipment.players} ${drill.equipment.players === 1 ? "player" : "players"}`;
         const ballLabel = `${drill.equipment.basketballs} ${drill.equipment.basketballs === 1 ? "basketball" : "basketballs"}`;
@@ -912,7 +971,11 @@
         document.querySelector("#next-step-label").textContent = "Next";
         const variations = drill.variations || [];
         const points = drill.pointsOfEmphasis || [];
-        drillInfoButton.hidden = !variations.length && !points.length;
+        drillInfoButton.hidden = isWelcome || (!variations.length && !points.length);
+        if (isWelcome) {
+          document.querySelector("#step-status-title").textContent = "Explore the drill library";
+          document.querySelector("#court-drill-title").textContent = "Decent Coach Drills";
+        }
         drillInfoTitle.textContent = `${drill.title} details`;
         drillInfoContent.innerHTML = `${variations.length ? `<section class="drill-info-section"><h3>Variations</h3><ol>${variations.map((item) => `<li>${item}</li>`).join("")}</ol></section>` : ""}${points.length ? `<section class="drill-info-section"><h3>Points of Emphasis</h3><ul>${points.map((item) => `<li>${item}</li>`).join("")}</ul></section>` : ""}`;
       }
@@ -927,6 +990,7 @@
         if (!drillLibrary[drillId]) return;
         setLibraryCollapsed(true);
         if (activeDrill.id === drillId) return;
+        stopWelcomeAnimation();
         stopPlayback();
         activeDrill = drillLibrary[drillId];
         stepFrames = activeDrill.steps;
@@ -1075,7 +1139,10 @@
 
       courtScene.classList.add("no-transition");
       animateCourt(1);
-      requestAnimationFrame(() => courtScene.classList.remove("no-transition"));
+      requestAnimationFrame(() => {
+        courtScene.classList.remove("no-transition");
+        startWelcomeAnimation();
+      });
       window.addEventListener("resize", () => trackCourt(stepFrames[currentStep - 1].focus));
 
       renderDrills();
