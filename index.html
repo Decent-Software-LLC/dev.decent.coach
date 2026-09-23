@@ -101,6 +101,8 @@
 
       .app { display: grid; grid-template-rows: 72px minmax(0, 1fr); height: 100%; }
       .topbar {
+        position: relative;
+        z-index: 50;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -136,6 +138,8 @@
         background: var(--control-bg);
         color: var(--ink);
         cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
       }
       .menu-button:hover, .menu-button[aria-expanded="true"] { border-color: rgba(var(--accent-rgb),.55); color: var(--lime); }
       .menu-button:focus-visible, .theme-option:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
@@ -155,7 +159,7 @@
       .theme-menu[hidden] { display: none; }
       .theme-menu-label { margin: 0 0 8px; color: var(--muted); font-size: 11px; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }
       .theme-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 11px; background: var(--switch-bg); }
-      .theme-option { display: grid; min-width: 0; height: 38px; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+      .theme-option { display: grid; min-width: 0; height: 38px; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
       .theme-option:hover { color: var(--ink); background: var(--hover-bg); }
       .theme-option[aria-pressed="true"] { background: var(--lime); color: var(--accent-ink); }
       .system-theme-icon { position: relative; display: inline-flex; }
@@ -623,7 +627,7 @@
         </aside>
 
         <main>
-          <section class="lesson" id="lesson" data-layout="both" data-mobile-view="list" aria-labelledby="lesson-title">
+          <section class="lesson" id="lesson" data-layout="both" data-mobile-view="court" aria-labelledby="lesson-title">
             <article class="lesson-copy">
               <div class="view-switch" aria-label="Lesson layout">
                 <button class="view-option" type="button" data-layout="list" aria-pressed="false">List</button>
@@ -751,7 +755,9 @@
       }
 
       menuButton.addEventListener("click", () => setThemeMenu(themeMenu.hidden));
-      themeOptions.forEach((option) => option.addEventListener("click", () => {
+      themeOptions.forEach((option) => option.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         applyTheme(option.dataset.themeChoice, true);
         setThemeMenu(false);
       }));
