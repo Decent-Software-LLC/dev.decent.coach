@@ -162,18 +162,20 @@
       .theme-option[aria-pressed="true"] .system-gear { background: var(--lime); }
       .workspace {
         display: grid;
-        grid-template-columns: minmax(260px, 310px) minmax(0, 1fr);
+        grid-template-columns: auto minmax(0, 1fr);
         min-height: 0;
-        transition: grid-template-columns 200ms ease;
       }
-      .workspace.library-collapsed { grid-template-columns: 76px minmax(0, 1fr); }
       .library {
         display: grid;
         grid-template-rows: auto minmax(0, 1fr);
+        width: 310px;
         min-height: 0;
         border-right: 1px solid var(--line);
         background: var(--library-bg);
+        overflow: hidden;
+        transition: width 180ms ease;
       }
+      .library-collapsed .library { width: 76px; }
       .library-heading { position: relative; padding: 24px 54px 14px 20px; }
       .library-toggle {
         position: absolute;
@@ -194,9 +196,11 @@
       .library-toggle svg { transition: transform 200ms ease; }
       .library-collapsed .library-toggle svg { transform: rotate(180deg); }
       .library-collapsed .library-heading { min-height: 74px; padding: 0; }
-      .library-collapsed .library-toggle { top: 20px; right: 20px; }
+      .library-collapsed .library-toggle { top: 20px; right: auto; left: 21px; z-index: 2; }
+      .library-heading > :not(.library-toggle),
+      #drill-library-content { opacity: 1; visibility: visible; transform: translateX(0); transition: opacity 120ms ease, transform 180ms ease, visibility 0s; }
       .library-collapsed .library-heading > :not(.library-toggle),
-      .library-collapsed #drill-library-content { display: none; }
+      .library-collapsed #drill-library-content { opacity: 0; visibility: hidden; pointer-events: none; transform: translateX(-14px); transition: opacity 100ms ease, transform 160ms ease, visibility 0s linear 160ms; }
       .eyebrow {
         margin: 0 0 8px;
         color: var(--lime);
@@ -355,6 +359,11 @@
 
       .court-panel { display: grid; grid-template-rows: auto minmax(0,1fr) auto; min-height: 560px; overflow: hidden; }
       .court-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 19px; border-bottom: 1px solid var(--line); }
+      .court-title-group { display: flex; min-width: 0; align-items: center; gap: 11px; }
+      .play-button { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border: 1px solid rgba(var(--accent-rgb),.5); border-radius: 50%; background: rgba(var(--accent-rgb),.1); color: var(--lime); cursor: pointer; }
+      .play-button:hover { background: rgba(var(--accent-rgb),.18); }
+      .play-button:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+      .play-button [hidden] { display: none; }
       .court-header strong { display: block; font-size: 14px; }
       .court-header span { color: var(--muted); font-size: 12px; }
       .view-switch {
@@ -475,7 +484,8 @@
 
       @media (max-width: 980px) {
         .app { height: auto; min-height: 100%; }
-        .workspace { grid-template-columns: 250px minmax(0,1fr); }
+        .library { width: 250px; }
+        .library-collapsed .library { width: 76px; }
         .lesson { grid-template-columns: 1fr; }
         .lesson[data-layout="list"], .lesson[data-layout="court"] { grid-template-columns: 1fr; justify-content: stretch; }
         .library { max-height: calc(100vh - 72px); position: sticky; top: 0; }
@@ -485,10 +495,11 @@
         .brand p, .back-link span { display: none; }
         .workspace { display: block; }
         .workspace.library-collapsed { display: block; }
-        .library { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
-        .library-collapsed .library { min-height: 58px; }
+        .library { position: static; width: 100%; max-height: 1000px; border-right: 0; border-bottom: 1px solid var(--line); transition: max-height 180ms ease; }
+        .library-collapsed .library { width: 100%; }
+        .library-collapsed .library { min-height: 58px; max-height: 58px; }
         .library-collapsed .library-heading { min-height: 58px; }
-        .library-collapsed .library-toggle { top: 12px; right: 16px; }
+        .library-collapsed .library-toggle { top: 12px; right: 16px; left: auto; }
         .drill-list { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 16px; }
         .source-label { display: none; }
         .drill-item { min-width: 210px; margin: 0 !important; }
@@ -599,7 +610,12 @@
 
             <section class="court-panel" id="court-panel" aria-label="Three-Man Weave court setup">
               <div class="court-header">
-                <div><strong id="court-step-title">Start in three lanes</strong><span id="court-drill-title">Three-Man Weave</span></div>
+                <div class="court-title-group">
+                  <button class="next-button" id="next-step" type="button" aria-label="Go to next step">
+                    <span id="next-step-label">Next</span>
+                  </button>
+                  <div><strong id="court-step-title">Start in three lanes</strong><span id="court-drill-title">Three-Man Weave</span></div>
+                </div>
                 <div class="view-switch" aria-label="Lesson layout">
                   <button class="view-option" type="button" data-layout="list" aria-pressed="false">List</button>
                   <button class="view-option" type="button" data-layout="court" aria-pressed="false">Court</button>
@@ -618,8 +634,9 @@
               </div>
               <div class="court-footer">
                 <div class="step-status" aria-live="polite"><strong id="step-status-title">Step 1 of 4</strong><span id="step-status-copy">Form three lines on the baseline. Player 1 begins in the middle with the ball.</span></div>
-                <button class="next-button" id="next-step" type="button" aria-label="Go to next step">
-                  <span id="next-step-label">Next</span>
+                <button class="play-button" id="play-drill" type="button" aria-label="Play drill" title="Play drill">
+                  <svg id="play-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 7 8 5-8 5V7Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                  <svg id="pause-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" hidden><path d="M9 7v10M15 7v10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
                 </button>
               </div>
             </section>
@@ -697,12 +714,14 @@
       const workspace = document.querySelector("#workspace");
       const libraryToggle = document.querySelector("#library-toggle");
 
-      libraryToggle.addEventListener("click", () => {
-        const collapsed = workspace.classList.toggle("library-collapsed");
+      function setLibraryCollapsed(collapsed) {
+        workspace.classList.toggle("library-collapsed", collapsed);
         libraryToggle.setAttribute("aria-expanded", String(!collapsed));
         libraryToggle.setAttribute("aria-label", collapsed ? "Expand drill library" : "Collapse drill library");
         libraryToggle.title = collapsed ? "Expand drill library" : "Collapse drill library";
-      });
+      }
+
+      libraryToggle.addEventListener("click", () => setLibraryCollapsed(!workspace.classList.contains("library-collapsed")));
 
       function renderDrills(query = "") {
         list.querySelectorAll(":scope > :not(#empty-state)").forEach((node) => node.remove());
@@ -757,8 +776,52 @@
       const courtStage = document.querySelector("#court-stage");
       const courtScene = document.querySelector("#court-scene");
       const courtBall = document.querySelector("#court-ball");
+      const playDrillButton = document.querySelector("#play-drill");
+      const playIcon = document.querySelector("#play-icon");
+      const pauseIcon = document.querySelector("#pause-icon");
       let currentStep = 1;
       let teamChangeTimer;
+      let playbackTimer;
+      let isPlaying = false;
+
+      function updatePlaybackButton() {
+        playIcon.hidden = isPlaying;
+        pauseIcon.hidden = !isPlaying;
+        playDrillButton.setAttribute("aria-label", isPlaying ? "Pause drill" : "Play drill");
+        playDrillButton.title = isPlaying ? "Pause drill" : "Play drill";
+      }
+
+      function stopPlayback() {
+        window.clearTimeout(playbackTimer);
+        isPlaying = false;
+        updatePlaybackButton();
+      }
+
+      function finishPlayback() {
+        window.clearTimeout(playbackTimer);
+        isPlaying = false;
+        courtScene.classList.add("no-transition");
+        selectStep(1, true);
+        requestAnimationFrame(() => courtScene.classList.remove("no-transition"));
+        updatePlaybackButton();
+      }
+
+      function advancePlayback() {
+        if (!isPlaying) return;
+        if (currentStep >= stepFrames.length) {
+          finishPlayback();
+          return;
+        }
+        selectStep(currentStep + 1, true);
+        playbackTimer = window.setTimeout(advancePlayback, stepFrames[currentStep - 1].duration || 2000);
+      }
+
+      function startPlayback() {
+        if (isPlaying) return;
+        isPlaying = true;
+        updatePlaybackButton();
+        advancePlayback();
+      }
 
       function renderLesson(drill) {
         document.querySelector("#lesson-categories").textContent = drill.categories.join(" · ");
@@ -803,7 +866,10 @@
       }
 
       function selectDrill(drillId) {
-        if (!drillLibrary[drillId] || activeDrill.id === drillId) return;
+        if (!drillLibrary[drillId]) return;
+        setLibraryCollapsed(true);
+        if (activeDrill.id === drillId) return;
+        stopPlayback();
         activeDrill = drillLibrary[drillId];
         stepFrames = activeDrill.steps;
         currentStep = 1;
@@ -877,7 +943,8 @@
         trackCourt(frame.focus);
       }
 
-      function selectStep(step) {
+      function selectStep(step, fromPlayback = false) {
+        if (!fromPlayback) stopPlayback();
         const previousStep = currentStep;
         currentStep = step;
         document.querySelectorAll(".step-button").forEach((item) => {
@@ -894,6 +961,7 @@
 
       renderLesson(activeDrill);
       bindStepButtons();
+      playDrillButton.addEventListener("click", () => isPlaying ? stopPlayback() : startPlayback());
       document.querySelector("#next-step").addEventListener("click", () => selectStep(currentStep === stepFrames.length ? 1 : currentStep + 1));
 
       const lesson = document.querySelector("#lesson");
