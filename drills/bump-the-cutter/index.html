@@ -512,6 +512,7 @@
       }
       .player[data-team="defense"] { background: var(--blue); box-shadow: 0 8px 20px rgba(3,24,48,.4), 0 0 0 4px rgba(40,120,208,.2); }
       .player[data-team="neutral"] { background: var(--neutral); box-shadow: 0 8px 20px rgba(0,0,0,.35), 0 0 0 4px rgba(115,123,118,.2); }
+      .player[data-callout] { z-index: 6; }
       .player[data-callout]::before {
         content: "";
         position: absolute;
@@ -548,7 +549,7 @@
       .player[data-callout="3"]::before, .player[data-callout="3"]::after { animation-delay: 2.7s; }
       .player[data-callout="4"]::before, .player[data-callout="4"]::after { animation-delay: 4.05s; }
       .player[data-callout="5"]::before, .player[data-callout="5"]::after { animation-delay: 5.4s; }
-      @keyframes callout-blink { 0%, 34% { opacity: 1; } 35%, 66% { opacity: 0; } 67%, 100% { opacity: 1; } }
+      @keyframes callout-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
       .court-ball {
         position: absolute;
         z-index: 4;
@@ -633,6 +634,7 @@
         .court-panel { min-height: 510px; }
         .court-wrap { padding: 14px; }
         .court-stage { min-height: 360px; }
+        .court-ball { transform: translate(-10%, -10%); }
         .view-switch,
         .lesson[data-layout="list"] .lesson-copy > .view-switch { display: none; }
         .mobile-view-toggle {
@@ -957,6 +959,7 @@
 
       function startWelcomeAnimation() {
         stopWelcomeAnimation();
+        if (activeDrill.id !== "welcome") return;
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         const circle = [
           [50, 20], [65, 25], [75, 38], [74, 55], [66, 70], [50, 77],
@@ -1260,7 +1263,7 @@
       animateCourt(1);
       requestAnimationFrame(() => {
         courtScene.classList.remove("no-transition");
-        startWelcomeAnimation();
+        if (activeDrill.id === "welcome") startWelcomeAnimation();
       });
       window.addEventListener("resize", () => trackCourt(stepFrames[currentStep - 1].focus));
 
