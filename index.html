@@ -482,6 +482,15 @@
       .court-scene.no-transition .player,
       .court-scene.no-transition .court-ball { transition: none; }
       .court-image { width: 100%; height: 100%; display: block; object-fit: contain; padding: 3%; opacity: .94; user-select: none; pointer-events: none; }
+      .court-overlay {
+        position: absolute;
+        z-index: 4;
+        display: block;
+        height: auto;
+        pointer-events: none;
+        user-select: none;
+      }
+      .court-overlay[hidden] { display: none; }
       .player {
         position: absolute;
         z-index: 3;
@@ -698,6 +707,7 @@
                 <div class="court-stage" id="court-stage">
                   <div class="court-scene" id="court-scene">
                     <img class="court-image" id="court-image" src="assets/courts/basketball-fullcourt.svg" alt="Aerial full basketball court diagram">
+                    <img class="court-overlay" id="court-overlay" alt="" hidden>
                     <div class="court-ball" id="court-ball" aria-label="Basketball">🏀</div>
                     <span class="start-label">Baseline start</span>
                   </div>
@@ -729,6 +739,8 @@
     <script src="data/drills/three-man-weave.js"></script>
     <script src="data/drills/close-out-drill.js"></script>
     <script src="data/drills/triangle-passing.js?v=6"></script>
+    <script src="data/drills/lay-up-and-rebounding-lines.js?v=9"></script>
+    <script src="data/drills/mirror-drills.js"></script>
     <script>
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
       const drillLibrary = window.BASKETBALL_DRILLS || {};
@@ -875,6 +887,7 @@
       const courtStage = document.querySelector("#court-stage");
       const courtScene = document.querySelector("#court-scene");
       const courtBall = document.querySelector("#court-ball");
+      const courtOverlay = document.querySelector("#court-overlay");
       const drillInfoButton = document.querySelector("#drill-info-button");
       const drillInfoModal = document.querySelector("#drill-info-modal");
       const drillInfoTitle = document.querySelector("#drill-info-title");
@@ -992,6 +1005,15 @@
         const courtImage = document.querySelector("#court-image");
         courtImage.src = drill.court.asset;
         courtImage.alt = `Aerial ${drill.court.label.toLowerCase()} basketball court diagram`;
+        const overlay = drill.court.overlay;
+        courtOverlay.hidden = !overlay;
+        if (overlay) {
+          courtOverlay.src = overlay.asset;
+          courtOverlay.alt = overlay.alt || "Aerial basketball hoop and backboard";
+          courtOverlay.style.left = `${overlay.left}%`;
+          courtOverlay.style.top = `${overlay.top}%`;
+          courtOverlay.style.width = `${overlay.width}%`;
+        }
         courtScene.style.aspectRatio = drill.court.aspectRatio;
         courtScene.dataset.courtType = drill.court.type;
         document.querySelector("#step-status-title").textContent = `Step 1 of ${drill.steps.length}`;
@@ -1053,6 +1075,7 @@
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         window.clearTimeout(teamChangeTimer);
         courtBall.getAnimations().forEach((animation) => animation.cancel());
+        courtBall.style.zIndex = "5";
         courtScene.style.setProperty("--animation-duration", `${duration}ms`);
         document.querySelectorAll(".player").forEach((player) => {
           player.getAnimations().forEach((animation) => animation.cancel());
@@ -1113,7 +1136,14 @@
           courtBall.style.left = `${ballLeft}%`;
           courtBall.style.top = `${ballTop}%`;
           courtBall.setAttribute("aria-label", `Basketball moving to player ${frame.ball}`);
-          if (sequentialForward && frame.ballArrival && previousFrame.ball && !reducedMotion) {
+          if (sequentialForward && frame.ballPath && !reducedMotion) {
+            courtBall.animate(frame.ballPath.map((point) => ({
+              left: `${point.position[0]}%`,
+              top: `${point.position[1]}%`,
+              zIndex: point.layer === "under" ? 2 : 5,
+              offset: point.offset
+            })), { duration, easing: "linear" });
+          } else if (sequentialForward && frame.ballArrival && previousFrame.ball && !reducedMotion) {
             const [startLeft, startTop] = previousFrame.ballPosition || previousFrame.positions[previousFrame.ball];
             courtBall.animate([
               { left: `${startLeft}%`, top: `${startTop}%`, offset: 0 },
