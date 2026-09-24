@@ -510,6 +510,43 @@
       }
       .player[data-team="defense"] { background: var(--blue); box-shadow: 0 8px 20px rgba(3,24,48,.4), 0 0 0 4px rgba(40,120,208,.2); }
       .player[data-team="neutral"] { background: var(--neutral); box-shadow: 0 8px 20px rgba(0,0,0,.35), 0 0 0 4px rgba(115,123,118,.2); }
+      .player[data-callout]::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: -12px;
+        border: 6px solid transparent;
+        border-top-color: white;
+        transform: translateX(-50%);
+        opacity: 0;
+        animation: callout-blink .45s steps(1, end) 3 forwards;
+      }
+      .player[data-callout]::after {
+        content: attr(data-callout);
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 10px);
+        min-width: 25px;
+        padding: 4px 8px;
+        border: 2px solid rgba(20, 23, 24, .22);
+        border-radius: 999px;
+        background: white;
+        color: #202426;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+        transform: translateX(-50%);
+        opacity: 0;
+        animation: callout-blink .45s steps(1, end) 3 forwards;
+      }
+      .player[data-callout="2"]::before, .player[data-callout="2"]::after { animation-delay: 0s; }
+      .player[data-callout="1"]::before, .player[data-callout="1"]::after { animation-delay: 1.35s; }
+      .player[data-callout="3"]::before, .player[data-callout="3"]::after { animation-delay: 2.7s; }
+      .player[data-callout="4"]::before, .player[data-callout="4"]::after { animation-delay: 4.05s; }
+      .player[data-callout="5"]::before, .player[data-callout="5"]::after { animation-delay: 5.4s; }
+      @keyframes callout-blink { 0%, 34% { opacity: 1; } 35%, 66% { opacity: 0; } 67%, 100% { opacity: 1; } }
       .court-ball {
         position: absolute;
         z-index: 4;
@@ -611,7 +648,7 @@
           cursor: pointer;
         }
       }
-      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
     </style>
   </head>
   <body>
@@ -741,6 +778,10 @@
     <script src="data/drills/triangle-passing.js?v=6"></script>
     <script src="data/drills/lay-up-and-rebounding-lines.js?v=11"></script>
     <script src="data/drills/mirror-drills.js"></script>
+    <script src="data/drills/bull-in-the-ring.js"></script>
+    <script src="data/drills/bump-the-cutter.js"></script>
+    <script src="data/drills/chill-drill.js"></script>
+    <script src="data/drills/five-on-four-plus-one.js"></script>
     <script>
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
       const drillLibrary = window.BASKETBALL_DRILLS || {};
@@ -1013,6 +1054,7 @@
           courtOverlay.style.left = `${overlay.left}%`;
           courtOverlay.style.top = `${overlay.top}%`;
           courtOverlay.style.width = `${overlay.width}%`;
+          courtOverlay.style.transform = `rotate(${overlay.rotation || 0}deg)`;
         }
         courtScene.style.aspectRatio = drill.court.aspectRatio;
         courtScene.dataset.courtType = drill.court.type;
@@ -1082,6 +1124,9 @@
           const [left, top] = frame.positions[player.dataset.playerId];
           player.style.left = `${left}%`;
           player.style.top = `${top}%`;
+          const callout = frame.callouts && frame.callouts[player.dataset.playerId];
+          if (callout) player.dataset.callout = callout;
+          else delete player.dataset.callout;
         });
         if (sequentialForward && !reducedMotion) {
           frame.movements.filter((movement) => movement.path === "curve-behind").forEach((movement) => {
