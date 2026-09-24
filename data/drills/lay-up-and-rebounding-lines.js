@@ -18,7 +18,7 @@
       "Protect the ball, take two strong dribbles, and deliver an accurate outlet pass.",
       "The next receiver should meet the pass while moving toward the basket."
     ],
-    equipment: { players: 6, basketballs: 1 },
+    equipment: { players: 6, playersLabel: "All Players", basketballs: 1 },
     court: {
       type: "half",
       asset: "assets/courts/basketball-halfcourt.svg",
@@ -43,16 +43,16 @@
     ],
     steps: [
       {
-        title: "Form two lines",
-        description: "Form the lay-up line outside the three-point line near one sideline and the rebounding line on the opposite side. Player 1 begins with the ball.",
+        title: "Set up two lines",
+        description: "Create one shooting line and one rebounding line. The first shooter begins with the ball, and the first rebounder gets ready on the opposite side.",
         focus: 50,
         ball: "p1",
         positions: { p1: [20, 79], p2: [14, 88], p3: [8, 97], p4: [78, 72], p5: [84, 81], p6: [90, 90] },
         movements: []
       },
       {
-        title: "Drive and anticipate",
-        description: "Player 1 drives to the first hash mark while Player 4 moves to the third hash mark. Player 1 finishes over the rim and Player 4 anticipates the rebound.",
+        title: "Drive, Shoot and Anticipate",
+        description: "The first player from the shooting line drives to the hoop and shoots a lay-up while the first player from the rebounding line moves forward ready for the rebound.",
         focus: 48,
         ball: "p4",
         ballPosition: [61, 31],
@@ -72,8 +72,8 @@
         ]
       },
       {
-        title: "Outlet and rotate",
-        description: "Player 4 passes to Player 2 moving toward the ball while Player 1 follows the baseline and sideline to the end of the rebounding line.",
+        title: "Secure, Pass and Rotate",
+        description: "The rebounder secures and protects the ball, then outlets to the next shooter moving toward the pass. The shooter rotates to the end of the rebounding line.",
         focus: 42,
         ball: "p2",
         ballPosition: [22, 68],
@@ -85,8 +85,8 @@
         ]
       },
       {
-        title: "Rebound and outlet",
-        description: "Player 4 follows the baseline and left sideline to join the lay-up line while Player 2 advances to the first hash mark with the ball and Player 5 moves to the third hash mark.",
+        title: "Continue the drill",
+        description: "After making the outlet pass, the rebounder joins the end of the shooting line. The next shooter attacks the basket while the next rebounder steps in and anticipates the shot.",
         focus: 46,
         ball: "p2",
         ballPosition: [39.5, 17],

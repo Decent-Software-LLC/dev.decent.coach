@@ -7,6 +7,18 @@
     status: "ready",
     categories: ["Passing", "Transition"],
     summary: "Three players pass in a weave pattern up the court, following each pass with a hard cut behind the receiver.",
+    variations: [
+      "Players can wait at the far end while the remaining groups come down the court, then return in the opposite direction. The next group may start when the previous group crosses half court.",
+      "Specify the type of pass players must use."
+    ],
+    pointsOfEmphasis: [
+      "Sprint down the court.",
+      "Run wide and fill the lanes.",
+      "Communicate and call for the ball.",
+      "Pass in front of the moving receiver.",
+      "Do not travel.",
+      "Keep the ball off the floor."
+    ],
     equipment: { players: 3, basketballs: 1 },
     court: {
       type: "full",

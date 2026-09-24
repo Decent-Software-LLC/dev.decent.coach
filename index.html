@@ -432,7 +432,7 @@
       .drill-info-button {
         position: absolute;
         right: 14px;
-        bottom: 14px;
+        top: 14px;
         z-index: 6;
         display: grid;
         width: 38px;
@@ -736,10 +736,10 @@
     </dialog>
 
     <script src="data/catalog.js"></script>
-    <script src="data/drills/three-man-weave.js"></script>
-    <script src="data/drills/close-out-drill.js"></script>
+    <script src="data/drills/three-man-weave.js?v=2"></script>
+    <script src="data/drills/close-out-drill.js?v=2"></script>
     <script src="data/drills/triangle-passing.js?v=6"></script>
-    <script src="data/drills/lay-up-and-rebounding-lines.js?v=9"></script>
+    <script src="data/drills/lay-up-and-rebounding-lines.js?v=11"></script>
     <script src="data/drills/mirror-drills.js"></script>
     <script>
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
@@ -985,7 +985,7 @@
         document.querySelector("#next-step").hidden = isWelcome;
         playDrillButton.hidden = isWelcome;
 
-        const playerLabel = `${drill.equipment.players} ${drill.equipment.players === 1 ? "player" : "players"}`;
+        const playerLabel = drill.equipment.playersLabel || `${drill.equipment.players} ${drill.equipment.players === 1 ? "player" : "players"}`;
         const ballLabel = `${drill.equipment.basketballs} ${drill.equipment.basketballs === 1 ? "basketball" : "basketballs"}`;
         document.querySelector("#lesson-meta").innerHTML = `<span class="meta-chip"><span class="meta-dot"></span>${playerLabel}</span><span class="meta-chip">${ballLabel}</span><span class="meta-chip">${drill.court.label}</span>`;
 

@@ -7,6 +7,14 @@
     status: "ready",
     categories: ["Defense", "Footwork"],
     summary: "Defenders close out four perimeter players, react to a jab step, and recover before rotating to the next assignment.",
+    variations: [
+      "Practice both bunny-hop and stutter-step closeout methods."
+    ],
+    pointsOfEmphasis: [
+      "Maintain correct defensive stance and footwork.",
+      "The defender calls ‘ball’ on every closeout.",
+      "Offensive players use a proper triple-threat stance and correct jab-step footwork."
+    ],
     equipment: { players: 8, basketballs: 0 },
     court: {
       type: "half",
