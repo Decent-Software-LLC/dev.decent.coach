@@ -819,6 +819,7 @@
     <script src="data/drills/star-drill.js"></script>
     <script>
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
+      const appBaseUrl = new URL("./", document.baseURI);
       const isProductionSite = window.location.hostname === "dev.decent.coach";
       const drillLibrary = Object.fromEntries(Object.entries(window.BASKETBALL_DRILLS || {}).filter(([, drill]) => !(isProductionSite && drill.localOnly)));
       const welcomeDrill = {
@@ -950,7 +951,7 @@
           const drill = readyDrills.get(title);
           const selected = drill?.id === activeDrill.id;
           const button = document.createElement(drill ? "a" : "button");
-          if (drill) button.href = new URL(`drills/${drill.id}/`, document.baseURI).href;
+          if (drill) button.href = new URL(`drills/${drill.id}/`, appBaseUrl).href;
           else button.type = "button";
           button.className = `drill-item${selected ? " active" : ""}${drill ? "" : " upcoming"}`;
           button.disabled = !drill;
@@ -1179,7 +1180,7 @@
         animateCourt(1);
         requestAnimationFrame(() => courtScene.classList.remove("no-transition"));
         renderDrills(search.value);
-        const drillUrl = new URL(`drills/${drillId}/`, document.baseURI);
+        const drillUrl = new URL(`drills/${drillId}/`, appBaseUrl);
         if (window.location.href !== drillUrl.href) window.history.pushState({ drillId }, "", drillUrl);
       }
 
