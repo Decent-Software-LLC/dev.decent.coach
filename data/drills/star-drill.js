@@ -1,7 +1,7 @@
 (function () {
   window.BASKETBALL_DRILLS = window.BASKETBALL_DRILLS || {};
   window.BASKETBALL_DRILLS["star-drill"] = {
-    id:"star-drill", title:"Star Drill", titleLines:["Star Drill"], status:"ready",
+    id:"star-drill", title:"Star Drill", titleLines:["Star Drill"], status:"ready", localOnly:true,
     categories:["Passing","Lay-ups","Receiving"], summary:"Five positions move the ball around the lane in a star sequence before the final receiver attacks for a lay-up.",
     variations:["Add a second ball after the first reaches Position 4.","Reverse direction for left-hand lay-ups.","Specify the pass or finishing type.","Finish with a short pull-up instead of a lay-up."],
     pointsOfEmphasis:["Make every pass hard and accurate.","Call the passer's name and show ten fingers.","Step toward every pass.","Drive hard and finish with correct lay-up form."],

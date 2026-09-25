@@ -810,7 +810,6 @@
     <script src="data/drills/mirror-drills.js"></script>
     <script src="data/drills/bull-in-the-ring.js"></script>
     <script src="data/drills/bump-the-cutter.js"></script>
-    <script src="data/drills/chill-drill.js"></script>
     <script src="data/drills/five-on-four-plus-one.js"></script>
     <script src="data/drills/defensive-shuffle-and-pass.js"></script>
     <script src="data/drills/five-corner-passing.js"></script>
@@ -820,7 +819,8 @@
     <script src="data/drills/star-drill.js"></script>
     <script>
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
-      const drillLibrary = window.BASKETBALL_DRILLS || {};
+      const isProductionSite = window.location.hostname === "dev.decent.coach";
+      const drillLibrary = Object.fromEntries(Object.entries(window.BASKETBALL_DRILLS || {}).filter(([, drill]) => !(isProductionSite && drill.localOnly)));
       const welcomeDrill = {
         id: "welcome",
         title: "Welcome Coaches",
