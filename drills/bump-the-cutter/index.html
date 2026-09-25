@@ -191,13 +191,14 @@
         width: 34px;
         height: 34px;
         place-items: center;
-        border: 1px solid var(--line);
+        border: 1px solid var(--lime);
         border-radius: 10px;
-        background: var(--control-bg);
-        color: var(--muted);
+        background: var(--lime);
+        color: var(--accent-ink);
+        box-shadow: 0 5px 16px rgba(var(--accent-rgb),.28);
         cursor: pointer;
       }
-      .library-toggle:hover { border-color: rgba(var(--accent-rgb),.45); color: var(--lime); }
+      .library-toggle:hover { filter: brightness(1.08); }
       .library-toggle:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
       .library-toggle svg { transition: transform 200ms ease; }
       .library-collapsed .library-toggle svg { transform: rotate(180deg); }
@@ -386,8 +387,8 @@
       .play-button:hover { background: rgba(var(--accent-rgb),.18); }
       .play-button:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
       .play-button [hidden] { display: none; }
-      .court-header strong { display: block; font-size: 14px; }
-      .court-header span { color: var(--muted); font-size: 12px; }
+      .court-header strong { display: block; font-size: 18px; font-weight: 850; line-height: 1.15; }
+      .court-header span { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; line-height: 1.25; }
       .view-switch {
         display: inline-flex;
         padding: 3px;
@@ -470,6 +471,11 @@
       .drill-info-content { display: grid; gap: 22px; padding: 22px; overflow-y: auto; }
       .drill-info-section h3 { margin: 0 0 10px; color: var(--lime); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
       .drill-info-section ol, .drill-info-section ul { display: grid; gap: 9px; margin: 0; padding-left: 22px; color: var(--copy-text); font-size: 16px; line-height: 1.45; }
+      .player-legend { display: flex; flex-wrap: wrap; gap: 12px 20px; }
+      .player-legend-item { display: inline-flex; align-items: center; gap: 8px; color: var(--copy-text); font-size: 15px; font-weight: 750; }
+      .player-legend-dot { width: 18px; height: 18px; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 7px rgba(0,0,0,.25); }
+      .player-legend-dot.offense { background: var(--red); }
+      .player-legend-dot.defense { background: var(--blue); }
       .court-scene {
         position: absolute;
         top: 0;
@@ -512,6 +518,20 @@
       }
       .player[data-team="defense"] { background: var(--blue); box-shadow: 0 8px 20px rgba(3,24,48,.4), 0 0 0 4px rgba(40,120,208,.2); }
       .player[data-team="neutral"] { background: var(--neutral); box-shadow: 0 8px 20px rgba(0,0,0,.35), 0 0 0 4px rgba(115,123,118,.2); }
+      .player-ball {
+        position: absolute;
+        right: -9px;
+        bottom: -7px;
+        display: grid;
+        width: 20px;
+        height: 20px;
+        place-items: center;
+        border-radius: 50%;
+        background: #111512;
+        font-size: 12px;
+        line-height: 1;
+        box-shadow: 0 3px 9px rgba(0,0,0,.45);
+      }
       .player[data-callout] { z-index: 6; }
       .player[data-callout]::before {
         content: "";
@@ -549,7 +569,11 @@
       .player[data-callout="3"]::before, .player[data-callout="3"]::after { animation-delay: 2.7s; }
       .player[data-callout="4"]::before, .player[data-callout="4"]::after { animation-delay: 4.05s; }
       .player[data-callout="5"]::before, .player[data-callout="5"]::after { animation-delay: 5.4s; }
+      .player[data-callout-loop]::before, .player[data-callout-loop]::after {
+        animation: callout-loop 3s steps(1, end) infinite;
+      }
       @keyframes callout-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+      @keyframes callout-loop { 0%, 15% { opacity: 1; } 16%, 100% { opacity: 0; } }
       .court-ball {
         position: absolute;
         z-index: 4;
@@ -565,6 +589,7 @@
         transition: left var(--animation-duration, 2s) cubic-bezier(.22,.75,.2,1), top var(--animation-duration, 2s) cubic-bezier(.22,.75,.2,1);
       }
       .court-ball[hidden] { display: none; }
+      .extra-court-ball { z-index: 4; }
       .player-1 { left: 5%; top: 50%; }
       .player-2 { left: 5%; top: 29%; }
       .player-3 { left: 5%; top: 71%; }
@@ -597,6 +622,8 @@
         .library-collapsed .library { width: 76px; }
         .lesson { grid-template-columns: 1fr; }
         .lesson[data-layout="list"], .lesson[data-layout="court"] { grid-template-columns: 1fr; justify-content: stretch; }
+        .lesson[data-layout="both"] .court-panel { order: 1; }
+        .lesson[data-layout="both"] .lesson-copy { order: 2; }
         .library { max-height: calc(100vh - 72px); position: sticky; top: 0; }
       }
       @media (max-width: 720px) {
@@ -621,9 +648,8 @@
           pointer-events: none;
           transition: opacity 120ms ease 80ms;
         }
-        .drill-list { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 16px; }
-        .source-label { display: none; }
-        .drill-item { min-width: 210px; margin: 0 !important; }
+        .drill-list { display: block; max-height: min(58vh, 520px); overflow-x: hidden; overflow-y: auto; padding: 0 16px 16px; }
+        .drill-item { min-width: 0; }
         .lesson { padding: 14px; gap: 14px; }
         .lesson[data-mobile-view="list"] .court-panel { display: none; }
         .lesson[data-mobile-view="court"] .lesson-copy { display: none; }
@@ -735,7 +761,7 @@
                   <button class="next-button" id="next-step" type="button" aria-label="Go to next step">
                     <span id="next-step-label">Next</span>
                   </button>
-                  <div><strong id="court-step-title">Start in three lanes</strong><span id="court-drill-title">Three-Player Weave</span></div>
+                  <div><strong id="court-drill-title">Three-Player Weave</strong><span id="court-step-title">Step 1: Start in three lanes</span></div>
                 </div>
                 <div class="view-switch" aria-label="Lesson layout">
                   <button class="view-option" type="button" data-layout="list" aria-pressed="false">List</button>
@@ -786,6 +812,12 @@
     <script src="data/drills/bump-the-cutter.js"></script>
     <script src="data/drills/chill-drill.js"></script>
     <script src="data/drills/five-on-four-plus-one.js"></script>
+    <script src="data/drills/defensive-shuffle-and-pass.js"></script>
+    <script src="data/drills/five-corner-passing.js"></script>
+    <script src="data/drills/full-court-four-line-passing.js"></script>
+    <script src="data/drills/line-dribbling-drills.js"></script>
+    <script src="data/drills/pass-shoot-and-rebound.js"></script>
+    <script src="data/drills/star-drill.js"></script>
     <script>
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
       const drillLibrary = window.BASKETBALL_DRILLS || {};
@@ -859,6 +891,8 @@
       const search = document.querySelector("#drill-search");
       const empty = document.querySelector("#empty-state");
       const readyDrills = new Map(Object.values(drillLibrary).map((drill) => [drill.title, drill]));
+      const readyDrillsById = new Map(Object.values(drillLibrary).map((drill) => [drill.id, drill]));
+      const recentDrillsKey = "basketball-drills-recent";
       document.querySelector("#library-summary").textContent = `${readyDrills.size} ${readyDrills.size === 1 ? "lesson is" : "lessons are"} ready. More guided drills are coming next.`;
       const catalogEntries = [];
       const catalogTitles = new Set();
@@ -880,12 +914,30 @@
 
       libraryToggle.addEventListener("click", () => setLibraryCollapsed(!workspace.classList.contains("library-collapsed")));
 
+      function storedRecentDrills() {
+        try {
+          const stored = JSON.parse(localStorage.getItem(recentDrillsKey) || "[]");
+          return Array.isArray(stored) ? stored.filter((id) => readyDrillsById.has(id)).slice(0, 2) : [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function rememberDrill(drillId) {
+        const recent = [drillId, ...storedRecentDrills().filter((id) => id !== drillId)].slice(0, 2);
+        try { localStorage.setItem(recentDrillsKey, JSON.stringify(recent)); } catch (error) {}
+      }
+
       function renderDrills(query = "") {
         list.querySelectorAll(":scope > :not(#empty-state)").forEach((node) => node.remove());
         const needle = query.trim().toLowerCase();
         const matches = catalogEntries.filter(({ title }) => title.toLowerCase().includes(needle));
         const readyEntries = matches.filter(({ title }) => readyDrills.has(title));
         const upcomingEntries = matches.filter(({ title }) => !readyDrills.has(title));
+        const recentEntries = storedRecentDrills().map((id) => {
+          const drill = readyDrillsById.get(id);
+          return catalogEntries.find(({ title }) => title === drill.title);
+        }).filter((entry) => entry && entry.title.toLowerCase().includes(needle));
 
         function appendLabel(text) {
           const label = document.createElement("p");
@@ -914,6 +966,11 @@
             selectDrill(drill.id);
           });
           list.appendChild(button);
+        }
+
+        if (recentEntries.length) {
+          appendLabel("Recent");
+          recentEntries.forEach((entry, index) => appendEntry(entry, String(index + 1)));
         }
 
         if (readyEntries.length) {
@@ -1042,15 +1099,31 @@
 
         document.querySelector("#lesson-steps").innerHTML = drill.steps.map((step, index) => `<li><button class="step-button" type="button"${index === 0 ? ' aria-current="step"' : ""} data-step="${index + 1}"><span class="step-number">${String(index + 1).padStart(2, "0")}</span><span class="step-copy"><strong>${step.title}</strong><span>${step.description}</span></span></button></li>`).join("");
 
-        courtScene.querySelectorAll(".player").forEach((player) => player.remove());
+        courtScene.querySelectorAll(".player, .extra-court-ball").forEach((player) => player.remove());
         drill.players.forEach((player) => {
           const marker = document.createElement("div");
           marker.className = "player";
           marker.dataset.playerId = player.id;
           marker.dataset.team = player.team;
+          marker.dataset.label = player.label;
           marker.setAttribute("aria-label", `${player.team} player ${player.label}`);
           marker.textContent = player.label;
+          if (drill.playerBalls?.includes(player.id)) {
+            const playerBall = document.createElement("span");
+            playerBall.className = "player-ball";
+            playerBall.setAttribute("aria-hidden", "true");
+            playerBall.textContent = "🏀";
+            marker.appendChild(playerBall);
+          }
           courtScene.insertBefore(marker, courtBall);
+        });
+        (drill.extraBallIds || []).forEach((ballId) => {
+          const extraBall = document.createElement("div");
+          extraBall.className = "court-ball extra-court-ball";
+          extraBall.dataset.extraBallId = ballId;
+          extraBall.setAttribute("aria-label", "Additional basketball");
+          extraBall.textContent = "🏀";
+          courtScene.insertBefore(extraBall, courtBall);
         });
 
         const courtImage = document.querySelector("#court-image");
@@ -1070,7 +1143,7 @@
         courtScene.dataset.courtType = drill.court.type;
         document.querySelector("#step-status-title").textContent = `Step 1 of ${drill.steps.length}`;
         document.querySelector("#step-status-copy").textContent = drill.steps[0].description;
-        document.querySelector("#court-step-title").textContent = drill.steps[0].title;
+        document.querySelector("#court-step-title").textContent = isWelcome ? drill.steps[0].title : `Step 1: ${drill.steps[0].title}`;
         document.querySelector("#next-step").setAttribute("aria-label", "Go to step 2");
         document.querySelector("#next-step-label").textContent = "Next";
         const variations = drill.variations || [];
@@ -1081,7 +1154,7 @@
           document.querySelector("#court-drill-title").textContent = "Decent Coach Drills";
         }
         drillInfoTitle.textContent = `${drill.title} details`;
-        drillInfoContent.innerHTML = `${variations.length ? `<section class="drill-info-section"><h3>Variations</h3><ol>${variations.map((item) => `<li>${item}</li>`).join("")}</ol></section>` : ""}${points.length ? `<section class="drill-info-section"><h3>Points of Emphasis</h3><ul>${points.map((item) => `<li>${item}</li>`).join("")}</ul></section>` : ""}`;
+        drillInfoContent.innerHTML = `${variations.length ? `<section class="drill-info-section"><h3>Variations</h3><ol>${variations.map((item) => `<li>${item}</li>`).join("")}</ol></section>` : ""}${points.length ? `<section class="drill-info-section"><h3>Points of Emphasis</h3><ul>${points.map((item) => `<li>${item}</li>`).join("")}</ul></section>` : ""}<section class="drill-info-section"><h3>Player Legend</h3><div class="player-legend"><span class="player-legend-item"><span class="player-legend-dot offense" aria-hidden="true"></span>Red: Offense</span><span class="player-legend-item"><span class="player-legend-dot defense" aria-hidden="true"></span>Blue: Defense</span></div></section>`;
       }
 
       function bindStepButtons() {
@@ -1093,6 +1166,7 @@
       function selectDrill(drillId) {
         if (!drillLibrary[drillId]) return;
         setLibraryCollapsed(true);
+        rememberDrill(drillId);
         if (activeDrill.id === drillId) return;
         stopWelcomeAnimation();
         stopPlayback();
@@ -1134,6 +1208,7 @@
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         window.clearTimeout(teamChangeTimer);
         courtBall.getAnimations().forEach((animation) => animation.cancel());
+        document.querySelectorAll(".extra-court-ball").forEach((ball) => ball.getAnimations().forEach((animation) => animation.cancel()));
         courtBall.style.zIndex = "5";
         courtScene.style.setProperty("--animation-duration", `${duration}ms`);
         document.querySelectorAll(".player").forEach((player) => {
@@ -1144,6 +1219,9 @@
           const callout = frame.callouts && frame.callouts[player.dataset.playerId];
           if (callout) player.dataset.callout = callout;
           else delete player.dataset.callout;
+          const loopingCallout = frame.loopingCallouts && frame.loopingCallouts.includes(player.dataset.playerId);
+          if (loopingCallout) player.dataset.calloutLoop = "";
+          else delete player.dataset.calloutLoop;
         });
         if (sequentialForward && !reducedMotion) {
           frame.movements.filter((movement) => movement.path === "curve-behind").forEach((movement) => {
@@ -1188,11 +1266,11 @@
         const applyTeams = () => document.querySelectorAll(".player").forEach((player) => {
           const team = teams[player.dataset.playerId];
           player.dataset.team = team;
-          player.setAttribute("aria-label", `${team} player ${player.textContent}`);
+          player.setAttribute("aria-label", `${team} player ${player.dataset.label}`);
         });
         if (sequentialForward && frame.teamChangeDelay && !reducedMotion) teamChangeTimer = window.setTimeout(applyTeams, frame.teamChangeDelay);
         else applyTeams();
-        courtBall.hidden = !frame.ball;
+        courtBall.hidden = !frame.ball || activeDrill.playerBalls?.includes(frame.ball);
         if (frame.ball) {
           const [ballLeft, ballTop] = frame.ballPosition || frame.positions[frame.ball];
           courtBall.style.left = `${ballLeft}%`;
@@ -1214,6 +1292,20 @@
             ], { duration, easing: "cubic-bezier(.22,.75,.2,1)" });
           }
         }
+        document.querySelectorAll(".extra-court-ball").forEach((extraBall) => {
+          const extraFrame = frame.extraBalls && frame.extraBalls[extraBall.dataset.extraBallId];
+          extraBall.hidden = !extraFrame;
+          if (!extraFrame) return;
+          extraBall.style.left = `${extraFrame.position[0]}%`;
+          extraBall.style.top = `${extraFrame.position[1]}%`;
+          if (sequentialForward && extraFrame.path && !reducedMotion) {
+            extraBall.animate(extraFrame.path.map((point) => ({
+              left: `${point.position[0]}%`,
+              top: `${point.position[1]}%`,
+              offset: point.offset
+            })), { duration, easing: "linear" });
+          }
+        });
         trackCourt(frame.focus);
       }
 
@@ -1227,7 +1319,7 @@
         });
         document.querySelector("#step-status-title").textContent = `Step ${step} of ${stepFrames.length}`;
         document.querySelector("#step-status-copy").textContent = stepFrames[step - 1].description;
-        document.querySelector("#court-step-title").textContent = stepFrames[step - 1].title;
+        document.querySelector("#court-step-title").textContent = `Step ${step}: ${stepFrames[step - 1].title}`;
         document.querySelector("#next-step").setAttribute("aria-label", step === stepFrames.length ? "Return to first step" : `Go to step ${step + 1}`);
         document.querySelector("#next-step-label").textContent = step === stepFrames.length ? "Restart" : "Next";
         animateCourt(step, previousStep);
