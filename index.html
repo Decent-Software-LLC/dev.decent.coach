@@ -51,6 +51,10 @@
         --phase-text: #7c837d;
         --hover-border: rgba(255,255,255,.22);
         --card-shadow: 0 24px 70px rgba(0,0,0,.24);
+        --footer-bg: #111512;
+        --footer-text: #d9dcd8;
+        --footer-muted: #9ba19c;
+        --footer-accent: #c8ff4d;
       }
       :root[data-theme="light"] {
         color-scheme: light;
@@ -84,6 +88,10 @@
         --phase-text: #5f6a61;
         --hover-border: rgba(20,34,22,.26);
         --card-shadow: 0 22px 55px rgba(32,45,34,.12);
+        --footer-bg: #e3e8e1;
+        --footer-text: #313a32;
+        --footer-muted: #5f6961;
+        --footer-accent: #a84f2a;
       }
 
       * { box-sizing: border-box; }
@@ -542,6 +550,7 @@
         transform: translateX(-50%);
         opacity: 0;
         animation: callout-blink .45s steps(1, end) 3 forwards;
+        animation-delay: var(--callout-delay, 0s);
       }
       .player[data-callout]::after {
         content: attr(data-callout);
@@ -562,6 +571,7 @@
         transform: translateX(-50%);
         opacity: 0;
         animation: callout-blink .45s steps(1, end) 3 forwards;
+        animation-delay: var(--callout-delay, 0s);
       }
       .player[data-callout="2"]::before, .player[data-callout="2"]::after { animation-delay: 0s; }
       .player[data-callout="1"]::before, .player[data-callout="1"]::after { animation-delay: 1.35s; }
@@ -614,6 +624,34 @@
         cursor: pointer;
       }
       .next-button:hover { background: rgba(var(--accent-rgb),.18); }
+
+      .site-footer {
+        padding: 32px 24px 36px;
+        border-top: 1px solid var(--line);
+        background: var(--footer-bg);
+        color: var(--footer-text);
+      }
+      .footer-content { text-align: center; }
+      .footer-basketball {
+        display: block;
+        width: 96px;
+        height: 96px;
+        margin: 0 auto 12px;
+        object-fit: contain;
+        filter: drop-shadow(0 8px 18px rgba(0,0,0,.22)) drop-shadow(0 0 1px var(--footer-accent));
+      }
+      .footer-text { margin: 0 0 17px; color: var(--footer-text); font-size: 15px; line-height: 1.5; }
+      .footer-decent { margin-bottom: 17px; }
+      .footer-decent a {
+        color: var(--footer-accent);
+        font-size: 14px;
+        font-weight: 850;
+        letter-spacing: .01em;
+        text-decoration: none;
+      }
+      .footer-decent a:hover { text-decoration: underline; text-underline-offset: 3px; }
+      .footer-decent a:focus-visible { outline: 2px solid var(--footer-accent); outline-offset: 4px; border-radius: 3px; }
+      .footer-copyright { margin: 0; color: var(--footer-muted); font-size: 12px; }
 
       @media (max-width: 980px) {
         .app { height: auto; min-height: 100%; }
@@ -789,6 +827,16 @@
               </div>
             </section>
           </section>
+          <footer class="site-footer">
+            <div class="footer-content">
+              <img class="footer-basketball" src="assets/branding/decent-basketball.png" alt="Decent icon over a basketball" width="192" height="192" loading="lazy">
+              <p class="footer-text">Making basketball drills easier to learn, teach, and run.</p>
+              <div class="footer-decent">
+                <a href="https://decentsoftware.llc/" target="_blank" rel="noopener">Decent Software LLC</a>
+              </div>
+              <p class="footer-copyright">© 2026 Decent Software LLC. All rights reserved.</p>
+            </div>
+          </footer>
         </main>
       </div>
     </div>
@@ -813,9 +861,14 @@
     <script src="data/drills/defensive-shuffle-and-pass.js"></script>
     <script src="data/drills/five-corner-passing.js"></script>
     <script src="data/drills/full-court-four-line-passing.js"></script>
+    <script src="data/drills/horseshoe-shooting.js"></script>
+    <script src="data/drills/knockout.js"></script>
     <script src="data/drills/line-dribbling-drills.js"></script>
+    <script src="data/drills/line-running-drills.js"></script>
     <script src="data/drills/pass-shoot-and-rebound.js"></script>
+    <script src="data/drills/pig-in-the-middle.js"></script>
     <script src="data/drills/star-drill.js"></script>
+    <script src="data/drills/ten-fingers.js"></script>
     <script>
       const sources = window.BASKETBALL_DRILL_CATALOG || [];
       const appBaseUrl = new URL("./", document.baseURI);
@@ -978,12 +1031,10 @@
           readyEntries.forEach((entry, index) => appendEntry(entry, String(index + 1)));
         }
 
-        sources.forEach((source) => {
-          const sourceEntries = upcomingEntries.filter((entry) => entry.source === source.label);
-          if (!sourceEntries.length) return;
-          appendLabel(source.label === "Basketball Drills" ? "Coming Soon" : source.label);
-          sourceEntries.forEach(appendEntry);
-        });
+        if (upcomingEntries.length) {
+          appendLabel("Coming Soon");
+          upcomingEntries.forEach(appendEntry);
+        }
 
         empty.style.display = matches.length ? "none" : "block";
       }
@@ -1219,6 +1270,9 @@
           const callout = frame.callouts && frame.callouts[player.dataset.playerId];
           if (callout) player.dataset.callout = callout;
           else delete player.dataset.callout;
+          const calloutDelay = frame.calloutDelays && frame.calloutDelays[player.dataset.playerId];
+          if (calloutDelay) player.style.setProperty("--callout-delay", `${calloutDelay}ms`);
+          else player.style.removeProperty("--callout-delay");
           const loopingCallout = frame.loopingCallouts && frame.loopingCallouts.includes(player.dataset.playerId);
           if (loopingCallout) player.dataset.calloutLoop = "";
           else delete player.dataset.calloutLoop;
